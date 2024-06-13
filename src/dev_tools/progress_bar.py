@@ -1,7 +1,7 @@
 import logging
 import time
 from collections.abc import Iterable
-from dev_tools.debug_tools import is_debug_on, is_timing_on
+from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
 
 
 def progress_bar(
@@ -14,15 +14,19 @@ def progress_bar(
     print_end: str = "\r",
 ) -> Iterable:
     """
-    Call in a loop to create terminal progress bar
-    @params:
-        iterable    - Required  : iterable object (Iterable)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        print_end   - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    Displays a terminal progress bar for an iterable.
+
+    Args:
+        iterable (Iterable): Required. Iterable object to track progress.
+        prefix (str): Optional. Prefix string for the progress bar. Default is "".
+        suffix (str): Optional. Suffix string for the progress bar. Default is "".
+        decimals (int): Optional. Number of decimals in percent complete. Default is 1.
+        length (int): Optional. Character length of the progress bar. Default is 50.
+        fill (str): Optional. Bar fill character. Default is "█".
+        print_end (str): Optional. End character (e.g., "\r", "\r\n"). Default is "\r".
+
+    Yields:
+        Iterable: Items from the provided iterable, with progress displayed.
     """
 
     debug = is_debug_on()
@@ -33,13 +37,19 @@ def progress_bar(
     errors = {}
 
     def print_progress_bar(iteration: int) -> None:
+        """
+        Prints the progress bar to the terminal.
+
+        Args:
+            iteration (int): Current iteration number.
+        """
         if not debug or total == 0:
             return
 
         percent = f"{100 * (iteration / float(total)):.{decimals}f}"
         filled_length = int(length * iteration // total)
         bar = fill * filled_length + "-" * (length - filled_length)
-        time_str = get_timing_str(iteration)
+        time_str = get_estimations(iteration)
 
         try:
             print(f"\r{prefix} |{bar}| {percent}% {suffix}{time_str}{'':<10}", end=print_end)
@@ -49,33 +59,27 @@ def progress_bar(
                 logger.exception("Progress bar is not able to print, DEBUG = %s", debug)
                 logging.exception("Progress bar is not able to print, DEBUG = %s", debug)   
 
-    def get_timing_str(iteration: int) -> str:
+    def get_estimations(iteration: int) -> str:
+        """
+        Returns a formatted string with elapsed and remaining time.
+
+        Args:
+            iteration (int): Current iteration number.
+
+        Returns:
+            str: Formatted string with elapsed and remaining time.
+        """
         if not timing:
             return ""
 
         et = time.time() - start_time
-        et_str = f"Elapsed time: {format_time(et)}"
+        et_str = f"Elapsed time: {human_readable_time(et)}"
         eta_str = "Time remaining: N/A"
         if iteration > 0 and et > 0:
             eta_seconds = et / (iteration / float(total)) - et
-            eta_str = f"Time remaining: {format_time(eta_seconds)}"
+            eta_str = f"Time remaining: {human_readable_time(eta_seconds)}"
 
         return f" |--{et_str} - {eta_str}--|"
-
-    def format_time(seconds) -> str:
-        minutes = int(seconds // 60)
-        seconds = seconds % 60
-
-        hours = int(minutes // 60)
-        minutes = minutes % 60
-
-        time_str = ""
-        if hours > 0:
-            time_str += f"{hours}h "
-        if minutes > 0:
-            time_str += f"{minutes}m "
-        time_str += f"{seconds:.2f}s"
-        return time_str
 
     print_progress_bar(0)
     for i, item in enumerate(iterable):

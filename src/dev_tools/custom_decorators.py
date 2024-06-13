@@ -6,6 +6,15 @@ from dev_tools.debug_tools import is_timing_on
 
 
 def timing_decorator(func: Callable) -> Callable:
+    """
+    Decorator that prints and optionally logs the elapsed time of the wrapped function.
+
+    Args:
+        func (Callable): The function to be decorated.
+
+    Returns:
+        Callable: The wrapped function with timing functionality.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs) -> Any:
         start_time = time.time()
