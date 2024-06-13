@@ -19,7 +19,8 @@ pip install bosos-dev-tools
 
 ## Usage
 
-#### Custom Logging Handler
+### Custom Logging Handler
+
 The `LogDBHandler` allows you to log messages directly to a database.
 
 ``` py
@@ -34,7 +35,8 @@ logger.setLevel(logging.INFO)
 logger.info('This is a test log message.')
 ```
 
-#### Timing Decorator
+### Timing Decorator
+
 Use the `timing_decorator` to measure the execution time of functions.
 
 ``` py
@@ -48,7 +50,8 @@ def example_function():
 example_function()
 ```
 
-#### Progress Bar
+### Progress Bar
+
 Use the `progress_bar` to measure the execution time of functions.
 
 ``` py
@@ -58,7 +61,8 @@ for item in progress_bar(range(10)):
     pass
 ```
 
-#### Debug Tools
+### Debug Tools
+
 Check if debug or timing modes are enabled via environment variables.
 Use the `logger_setup` to set up your logging settings at the beginning of the script.
 
@@ -84,5 +88,6 @@ if __name__ == '__main__':
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/bjorngun/developer-tools/blob/main/LICENSE) file for more details.
 
 ## Links
+
 - **Source Code**: [GitHub Repository](https://github.com/bjorngun/developer-tools)
 - **Issue Tracker**: [GitHub Issues](https://github.com/bjorngun/developer-tools/issues)
