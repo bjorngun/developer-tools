@@ -116,9 +116,6 @@ def human_readable_time(seconds: int) -> str:
 
     return ' '.join(time_str) if time_str else '0.000s'
 
-# Example usage:
-print(human_readable_time(12345678.6343))  # Output: "142 days, 21 hours, 21 minutes, 18 seconds"
-
 def _log_exit_code() -> None:
     """Log the exit code of the script."""
     logger = logging.getLogger(__name__)
