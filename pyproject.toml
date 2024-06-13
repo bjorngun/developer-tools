@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'bosos-dev-tools'
+version = '0.0.1'
+description = 'Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes custom logging handlers, decorators for measuring execution time, and a progress bar utility to enhance the development workflow.'#TODO
+authors = [{ name = "Björn Gunnarsson", email = "bosos3@hotmail.com" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = ["development", "tools", "logging", "decorators"]
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.12',
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    'pyodbc',
+    'python-dotenv',
+]
+
+[project.urls]
+Source = "https://github.com/bjorngun/developer-tools"
+Tracker = "https://github.com/bjorngun/developer-tools/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
