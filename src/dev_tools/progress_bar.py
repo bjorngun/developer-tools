@@ -48,16 +48,16 @@ def progress_bar(
 
         percent = f"{100 * (iteration / float(total)):.{decimals}f}"
         filled_length = int(length * iteration // total)
-        bar = fill * filled_length + "-" * (length - filled_length)
+        bar_str = fill * filled_length + "-" * (length - filled_length)
         time_str = get_estimations(iteration)
 
         try:
-            print(f"\r{prefix} |{bar}| {percent}% {suffix}{time_str}{'':<10}", end=print_end)
+            print(f"\r{prefix} |{bar_str}| {percent}% {suffix}{time_str}{'':<10}", end=print_end)
         except UnicodeEncodeError:
             if "UnicodeEncodeError" not in errors:
                 errors["UnicodeEncodeError"] = True
                 logger.exception("Progress bar is not able to print, DEBUG = %s", debug)
-                logging.exception("Progress bar is not able to print, DEBUG = %s", debug)   
+                logging.exception("Progress bar is not able to print, DEBUG = %s", debug)
 
     def get_estimations(iteration: int) -> str:
         """

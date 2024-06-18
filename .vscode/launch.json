@@ -29,6 +29,17 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src"
             }
+        },
+        {
+            "name": "Python: Run Pylint",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/venv/Scripts/pylint.exe",
+            "args": [
+                "${workspaceFolder}/src"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
