@@ -2,10 +2,7 @@
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey)](https://pypi.org/project/bosos-dev-tools/#files)
 [![PypI Versions](https://img.shields.io/pypi/v/bosos-dev-tools)](https://pypi.org/project/bosos-dev-tools/#history)
 [![PyPI status](https://img.shields.io/pypi/status/bosos-dev-tools.svg)](https://pypi.python.org/pypi/bosos-dev-tools/)
-[![Github Actions Build Status](https://github.com/bjorngun/developer-tools/actions/workflows/build.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions)
-[![Github Actions Lint Status](https://github.com/bjorngun/developer-tools/actions/workflows/lint.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions)
-[![Github Actions Test Status](https://github.com/bjorngun/developer-tools/actions/workflows/test.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions)
-[![Github Actions Publish Status](https://github.com/bjorngun/developer-tools/actions/workflows/test-and-publish.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions)
+[![Github Actions Test and Publish Status](https://github.com/bjorngun/developer-tools/actions/workflows/test-and-publish.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions)
 [![codecov](https://codecov.io/gh/bjorngun/developer-tools/graph/badge.svg?token=LZKYK9IK5K)](https://codecov.io/gh/bjorngun/developer-tools)
 [![License](https://img.shields.io/pypi/l/bosos-dev-tools)](LICENSE)
 

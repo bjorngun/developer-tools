@@ -4,7 +4,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'bosos-dev-tools'
-version = '0.1.0'
+version = '0.1.1'
 description = 'Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes custom logging handlers, decorators for measuring execution time, and a progress bar utility to enhance the development workflow.'#TODO
 authors = [{ name = 'Björn Gunnarsson', email = 'bosos3@hotmail.com' }]
 license = { file = 'LICENSE' }
