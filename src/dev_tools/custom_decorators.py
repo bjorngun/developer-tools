@@ -1,3 +1,10 @@
+"""
+custom_decorators.py
+
+This module provides a timing decorator to measure and optionally log the execution time of
+functions.
+"""
+
 import time
 from typing import Any, Callable
 from functools import wraps
@@ -15,6 +22,7 @@ def timing_decorator(func: Callable) -> Callable:
     Returns:
         Callable: The wrapped function with timing functionality.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> Any:
         start_time = time.time()
@@ -26,9 +34,10 @@ def timing_decorator(func: Callable) -> Callable:
         print(f"Elapsed time for {func.__name__}: {elapsed_time:.2f} seconds")
 
         # Check if timing is enabled and log if applicable
-        if is_timing_on() and args and hasattr(args[0], 'logger'):
-            logger = getattr(args[0], 'logger')
+        if is_timing_on() and args and hasattr(args[0], "logger"):
+            logger = getattr(args[0], "logger")
             logger.info(f"Elapsed time for {func.__name__}: {elapsed_time:.2f} seconds")
 
         return result
+
     return wrapper

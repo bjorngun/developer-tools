@@ -1,3 +1,11 @@
+"""
+debug_tools.py
+
+This module provides utilities for debugging and timing, including functions to check if debugging
+or timing is enabled
+and to log exceptions.
+"""
+
 import atexit
 from datetime import datetime
 import logging
@@ -27,9 +35,16 @@ def is_database_logging_on() -> bool:
     return os.getenv("LOGGER_DATABASE", "False").lower() in ["true", "1", "t", "yes"]
 
 
+def log_exit_code() -> None:
+    """Log the exit code of the script."""
+    logger = logging.getLogger(__name__)
+    exit_code = 0 if sys.exc_info() == (None, None, None) else 1
+    logger.info("Exit code: %s", exit_code)
+
+
 def logger_setup():
     """Set up logging configuration based on environment variables and debug mode."""
-    atexit.register(_log_exit_code)
+    atexit.register(log_exit_code)
 
     # Loads up all the environment variables
     load_dotenv()
@@ -76,12 +91,23 @@ def logger_setup():
             logging.getLogger("").addHandler(log_db_handler)
 
     logger = logging.getLogger(__name__)
-    logger.info('Setting up logger for %s', os.getenv("SCRIPT_NAME", Path.cwd().name))
-
-
+    logger.info("Setting up logger for %s", os.getenv("SCRIPT_NAME", Path.cwd().name))
 
 
 class TimePeriod(Enum):
+    """
+    An enumeration representing various time periods with their corresponding singular and plural
+    names, durations in seconds, and whether they support decimal representation.
+
+    Attributes:
+        ACT_YEAR (tuple): Represents an actual year (365.25 days).
+        YEAR (tuple): Represents a year (365 days).
+        DAY (tuple): Represents a day.
+        HOUR (tuple): Represents an hour.
+        MINUTE (tuple): Represents a minute.
+        SECOND (tuple): Represents a second.
+    """
+
     ACT_YEAR = (" year", " years", 31557600, False)
     YEAR = (" year", " years", 365 * 60 * 60 * 24, False)
     DAY = (" day", " days", 60 * 60 * 24, False)
@@ -91,18 +117,22 @@ class TimePeriod(Enum):
 
     @property
     def single_name(self) -> str:
+        """Returns the singular name."""
         return self.value[0]
 
     @property
     def multiple_name(self) -> str:
+        """Returns the plural name."""
         return self.value[1]
 
     @property
     def seconds(self) -> int:
+        """Returns the duration in seconds."""
         return self.value[2]
 
     @property
     def has_decimals(self) -> bool:
+        """Indicates if decimals are supported."""
         return self.value[3]
 
 
@@ -137,19 +167,14 @@ def human_readable_time(seconds: int) -> str:
             if period.has_decimals:
                 time_str.append(f"{period_value+seconds:.3f}{period.single_name}")
             else:
-                time_str.append((
-                    f"{int(period_value)}"
-                    f"{period.multiple_name if period_value != 1 else period.single_name}"
-                ))
+                time_str.append(
+                    (
+                        f"{int(period_value)}"
+                        f"{period.multiple_name if period_value != 1 else period.single_name}"
+                    )
+                )
 
     return " ".join(time_str) if time_str else "0.000s"
-
-
-def _log_exit_code() -> None:
-    """Log the exit code of the script."""
-    logger = logging.getLogger(__name__)
-    exit_code = 0 if sys.exc_info() == (None, None, None) else 1
-    logger.info("Exit code: %s", exit_code)
 
 
 def _default_logging_config(logger_file_path: str) -> None:

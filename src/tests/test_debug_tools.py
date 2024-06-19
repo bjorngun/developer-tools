@@ -31,10 +31,7 @@ class TestDebugTools(unittest.TestCase):
         mock_fileConfig.assert_called_once()
 
     def test_human_readable_time(self):
-        self.assertEqual(
-            human_readable_time(12345678.251),
-            "142 days 21h 21m 18.251s"
-        )
+        self.assertEqual(human_readable_time(12345678.251), "142 days 21h 21m 18.251s")
 
     def test_zero_seconds(self):
         self.assertEqual(human_readable_time(0), "0.000s")
@@ -65,7 +62,9 @@ class TestDebugTools(unittest.TestCase):
         self.assertEqual(human_readable_time(63122461), "2 years 2h 1m 1.000s")
 
     def test_multiple_units(self):
-        self.assertEqual(human_readable_time(123456789), "3 years 333 days 3h 33m 9.000s")
+        self.assertEqual(
+            human_readable_time(123456789), "3 years 333 days 3h 33m 9.000s"
+        )
 
 
 if __name__ == "__main__":

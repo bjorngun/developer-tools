@@ -1,3 +1,14 @@
+[![Python Versions](https://img.shields.io/pypi/pyversions/bosos-dev-tools.svg?logo=python&logoColor=white)](https://pypi.org/project/bosos-dev-tools/#files)
+[![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey)](https://pypi.org/project/bosos-dev-tools/#files)
+[![PypI Versions](https://img.shields.io/pypi/v/bosos-dev-tools)](https://pypi.org/project/bosos-dev-tools/#history)
+[![PyPI format](https://img.shields.io/pypi/format/bosos-dev-tools.svg)](https://pypi.python.org/pypi/bosos-dev-tools/)
+[![PyPI status](https://img.shields.io/pypi/status/bosos-dev-tools.svg)](https://pypi.python.org/pypi/bosos-dev-tools/)
+[![License](https://img.shields.io/pypi/l/bosos-dev-tools)](LICENSE)
+<!-- [![Github Actions Build Status](https://github.com/bjorngun/developer-tools/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/bjorngun/developer-tools/actions)
+[![Github Actions Lint Status](https://github.com/bjorngun/developer-tools/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/bjorngun/developer-tools/actions)
+[![Github Actions Test Status](https://github.com/bjorngun/developer-tools/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/bjorngun/developer-tools/actions)
+[![Github Actions Publish Status](https://github.com/bjorngun/developer-tools/actions/workflows/test-and-publish.yml/badge.svg?branch=main)](https://github.com/bjorngun/developer-tools/actions) -->
+
 # Bosos Dev Tools
 
 Bosos Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes custom logging handlers, decorators for measuring execution time, and a progress bar utility to enhance the development workflow.

@@ -1,9 +1,17 @@
+"""
+progress_bar.py
+
+This module provides a progress bar utility for iterables, with support for debugging and timing
+estimations.
+"""
+
 import logging
 import time
 from collections.abc import Iterable
 from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
 
 
+# pylint: disable=too-many-arguments
 def progress_bar(
     iterable: Iterable,
     prefix: str = "",
@@ -29,8 +37,6 @@ def progress_bar(
         Iterable: Items from the provided iterable, with progress displayed.
     """
 
-    debug = is_debug_on()
-    timing = is_timing_on()
     total = len(iterable)
     start_time = time.time()
     logger = logging.getLogger(__name__)
@@ -43,7 +49,7 @@ def progress_bar(
         Args:
             iteration (int): Current iteration number.
         """
-        if not debug or total == 0:
+        if not is_debug_on() or total == 0:
             return
 
         percent = f"{100 * (iteration / float(total)):.{decimals}f}"
@@ -52,12 +58,16 @@ def progress_bar(
         time_str = get_estimations(iteration)
 
         try:
-            print(f"\r{prefix} |{bar_str}| {percent}% {suffix}{time_str}{'':<10}", end=print_end)
+            print(
+                f"\r{prefix} |{bar_str}| {percent}% {suffix}{time_str}{'':<10}",
+                end=print_end,
+            )
         except UnicodeEncodeError:
             if "UnicodeEncodeError" not in errors:
                 errors["UnicodeEncodeError"] = True
-                logger.exception("Progress bar is not able to print, DEBUG = %s", debug)
-                logging.exception("Progress bar is not able to print, DEBUG = %s", debug)
+                logger.exception(
+                    "Progress bar is not able to print, DEBUG = %s", is_debug_on()
+                )
 
     def get_estimations(iteration: int) -> str:
         """
@@ -69,7 +79,7 @@ def progress_bar(
         Returns:
             str: Formatted string with elapsed and remaining time.
         """
-        if not timing:
+        if not is_timing_on():
             return ""
 
         et = time.time() - start_time
@@ -86,5 +96,5 @@ def progress_bar(
         yield item
         print_progress_bar(i + 1)
     # Print New Line on Complete
-    if debug and total > 0:
+    if is_debug_on() and total > 0:
         print()

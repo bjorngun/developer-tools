@@ -20,23 +20,55 @@
             ]
         },
         {
-            "name": "Python: Test Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/src"
-            }
-        },
-        {
             "name": "Python: Run Pylint",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/venv/Scripts/pylint.exe",
             "args": [
-                "${workspaceFolder}/src"
+                "${workspaceFolder}/src/dev_tools"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Run Tests with Coverage",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/venv/Scripts/coverage.exe",
+            "args": [
+                "run",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "src/tests",
+                "-p",
+                "test_*.py"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src/dev_tools"
+            }
+        },
+        {
+            "name": "Python: Generate Coverage Report",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/venv/Scripts/coverage.exe",
+            "args": [
+                "xml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Generate HTML Coverage Report",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/venv/Scripts/coverage.exe",  // Adjust path if necessary
+            "args": [
+                "html"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

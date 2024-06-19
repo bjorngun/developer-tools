@@ -1,3 +1,10 @@
+"""
+custom_handlers.py
+
+This module provides custom logging handlers, including a handler that logs messages to a SQL
+database.
+"""
+
 import logging
 import os
 from datetime import datetime
@@ -7,80 +14,32 @@ import pyodbc
 
 
 class LogDBHandler(logging.Handler):
-    """Customized logging handler that puts logs to the database."""
+    """
+    A custom logging handler that logs messages to a SQL database.
 
-    class SQLLogConnection:
-        """Connection class for a SQL database."""
+    This handler overrides the logging.Handler class to provide functionality for logging messages
+    to a SQL database. It manages the SQL connection and handles the insertion of log records into
+    the specified database table.
 
-        def __init__(self):
-            """Initializes connection to a database."""
-            try:
-                connection_string = (
-                    f'SERVER={os.getenv("LOGGER_DB_SERVER")};'
-                    f'DATABASE={os.getenv("LOGGER_DB_NAME")};'
-                    f'DRIVER={os.getenv("LOGGER_SQL_DRIVER")};'
-                    "Trusted_Connection=yes;"
-                )
+    Attributes:
+        MAX_LOG_LEN (int): Maximum length for the log message to be stored in the database.
+        MAX_LOG_MSG (str): Message to append if the log message is truncated.
+    """
 
-                conn = pyodbc.connect(
-                    connection_string,
-                    autocommit=True,
-                    TrustServerCertificate="YES",
-                )
-                self.cursor = conn.cursor()
-            except pyodbc.Error as e:
-                logging.getLogger("sql_logger").error(
-                    "Failed to connect to database: %s", e
-                )
-                self.cursor = None
-
-        def insert(self, table: str, columns: list[str], values: list):
-            """Executes Insert statement in the connected database.
-
-            Args:
-                table (str): Name of the table being inserted into
-                columns (list[str]): List of names of the columns that are being inserted into
-                values (list): List of the values
-            """
-            if self.cursor is None:
-                logging.getLogger("sql_logger").error(
-                    "No database connection available."
-                )
-                return
-
-            table = f"[dbo].[{table}]"
-            header = ", ".join([f"[{x}]" for x in columns])
-            parameters = ", ".join(["?"] * len(columns))
-
-            try:
-                self.cursor.execute(
-                    f"INSERT INTO {table} ({header}) VALUES({parameters})", values
-                )
-            except pyodbc.Error as e:
-                logging.getLogger("sql_logger").error(
-                    "Error executing insert statement: %s", e
-                )
-            except TypeError as e:
-                logging.getLogger("sql_logger").error(
-                    "Type error with provided values: %s", e
-                )
-            except Exception as e:
-                logging.getLogger("sql_logger").error("Unexpected error: %s", e)
-                raise e
-
-    # Maximum length for the log message to be stored in the database
     MAX_LOG_LEN = 2048
-    # Message to append if the log message is truncated
     MAX_LOG_MSG = "... too long, check the local logs to see the full msg"
 
     def __init__(self, db_table: str):
         """Initializes the handler and the SQL connection."""
         logging.Handler.__init__(self)
-        self.sql_connection = self.SQLLogConnection()
+        self.sql_cursor = self._get_sql_connection()
         self.db_table = db_table
 
     def emit(self, record):
         """Emits a record to the database."""
+
+        if self.sql_cursor is None:
+            return
 
         # Ensure message is a string and escape quotes if necessary
         try:
@@ -126,9 +85,67 @@ class LogDBHandler(logging.Handler):
 
         # Insert the log entry into the database
         try:
-            self.sql_connection.insert(self.db_table, db_columns, row_values)
-        except Exception as e:
-            logging.getLogger("sql_logger").error(
-                "Error inserting log into database: %s", e
+            self._insert_log(self.db_table, db_columns, row_values)
+        except Exception: # pylint: disable=broad-exception-caught
+            self.handleError(record)
+
+    def _get_sql_connection(self):
+        """Initializes connection to a database."""
+        try:
+            connection_string = (
+                f'SERVER={os.getenv("LOGGER_DB_SERVER")};'
+                f'DATABASE={os.getenv("LOGGER_DB_NAME")};'
+                f'DRIVER={os.getenv("LOGGER_SQL_DRIVER")};'
+                "Trusted_Connection=yes;"
             )
+
+            conn = pyodbc.connect(
+                connection_string,
+                autocommit=True,
+                TrustServerCertificate="YES",
+            )
+            cursor = conn.cursor()
+            return cursor
+        except pyodbc.Error as e:
+            logging.getLogger("sql_logger").error(
+                "Failed to connect to database: %s", e
+            )
+            return None
+
+    def _insert_log(self, table: str, columns: list[str], values: list):
+        """Executes Insert statement in the connected database.
+
+        Args:
+            table (str): Name of the table being inserted into
+            columns (list[str]): List of names of the columns that are being inserted into
+            values (list): List of the values
+        """
+        if self.sql_cursor is None:
+            return
+
+        table = f"[dbo].[{table}]"
+        header = ", ".join([f"[{x}]" for x in columns])
+        parameters = ", ".join(["?"] * len(columns))
+
+        try:
+            self.sql_cursor.execute(
+                f"INSERT INTO {table} ({header}) VALUES({parameters})", values
+            )
+        except pyodbc.Error as e:
+            sql_state = e.args[0]
+            if sql_state == "28000":
+                logging.getLogger("sql_logger").error(
+                    "LDAP Connection failed: check password"
+                )
+            else:
+                sql_state_msg = e.args[1]
+                logging.getLogger("sql_logger").error(
+                    "Error executing insert statement: %s", sql_state_msg
+                )
+        except TypeError as e:
+            logging.getLogger("sql_logger").error(
+                "Type error with provided values: %s", e
+            )
+        except Exception as e:
+            logging.getLogger("sql_logger").error("Unexpected error: %s", e)
             raise e
