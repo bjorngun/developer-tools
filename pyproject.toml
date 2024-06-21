@@ -27,6 +27,15 @@ dependencies = [
     'python-dotenv',
 ]
 
+[project.optional-dependencies]
+test = [
+    'coverage',
+    'coverage',
+]
+lint = [
+    'pylint',
+]
+
 [project.urls]
 Source = 'https://github.com/bjorngun/developer-tools'
 Tracker = 'https://github.com/bjorngun/developer-tools/issues'

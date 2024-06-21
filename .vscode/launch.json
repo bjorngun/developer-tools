@@ -17,7 +17,8 @@
                 "src/tests",
                 "-p",
                 "test_*.py"
-            ]
+            ],
+            "preLaunchTask": "Install test requirements"
         },
         {
             "name": "Python: Run Pylint",
@@ -28,50 +29,15 @@
                 "${workspaceFolder}/src/dev_tools"
             ],
             "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: Run Tests with Coverage",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/venv/Scripts/coverage.exe",
-            "args": [
-                "run",
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
-                "src/tests",
-                "-p",
-                "test_*.py"
-            ],
-            "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/src/dev_tools"
-            }
+            "preLaunchTask": "Install lint requirements"
         },
         {
-            "name": "Python: Generate Coverage Report",
+            "name": "Run Tests with Codecov and Generate HTML Coverage Report",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/venv/Scripts/coverage.exe",
-            "args": [
-                "xml"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: Generate HTML Coverage Report",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/venv/Scripts/coverage.exe",  // Adjust path if necessary
-            "args": [
-                "html"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
+            "code": "print('No-OP')",
+            "preLaunchTask": "Generate coverage report"
         }
     ]
 }
