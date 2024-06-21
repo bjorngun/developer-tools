@@ -38,6 +38,25 @@
             "request": "launch",
             "code": "print('No-OP')",
             "preLaunchTask": "Generate coverage report"
+        },
+        {
+            "name": "Clean rebuild and test - re-install python and packages (WARNING: code could possibly not support new packages or newer version of python)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": [
+                "discover",
+                "-s",
+                "src/tests",
+                "-p",
+                "test_*.py"
+            ],
+            "preLaunchTask": "Clean rebuild"
         }
     ]
 }

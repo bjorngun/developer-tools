@@ -16,12 +16,12 @@
             }
         },
         {
-            "label": "Create virtual environment (Unix)",
+            "label": "Delete venv folder",
             "type": "shell",
-            "command": "bash",
+            "command": "cmd",
             "args": [
-                "-c",
-                "if [ ! -d \"${workspaceFolder}/venv\" ]; then python -m venv ${workspaceFolder}/venv; fi"
+                "/c",
+                "rmdir /s /q ${workspaceFolder}\\venv"
             ],
             "problemMatcher": [],
             "group": {
@@ -107,6 +107,78 @@
             ],
             "problemMatcher": [],
             "dependsOn": "Generate coverage report"
+        },
+        {
+            "label": "Copy venv folder - for cleanRebuild",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "xcopy ${workspaceFolder}\\venv ${workspaceFolder}\\venv_backup /E /I /H /Y"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "Delete venv folder - for cleanRebuild",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "rmdir /s /q ${workspaceFolder}\\venv"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "Copy venv folder - for cleanRebuild"
+        },
+        {
+            "label": "Create virtual environment - for cleanRebuil",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "if not exist \"${workspaceFolder}\\venv\" (python -m venv ${workspaceFolder}\\venv)"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "Delete venv folder - for cleanRebuild"
+        },
+        {
+            "label": "Upgrade pip - for cleanRebuild",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/Scripts/python.exe",
+            "args": ["-m", "pip", "install", "--upgrade", "pip"],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "Create virtual environment - for cleanRebuil"
+        },
+        {
+            "label": "Install requirements - for cleanRebuild",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/Scripts/python.exe",
+            "args": ["-m", "pip", "install", "."],
+            "problemMatcher": [],
+            "dependsOn": "Upgrade pip - for cleanRebuild"
+        },
+        {
+            "label": "Clean rebuild",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/Scripts/python.exe",
+            "args": ["-m", "pip", "install", ".[test]"],
+            "problemMatcher": [],
+            "dependsOn": "Install requirements"
         }
     ]
 }
