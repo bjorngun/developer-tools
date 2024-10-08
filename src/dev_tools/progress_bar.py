@@ -14,24 +14,22 @@ from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
 # pylint: disable=too-many-arguments
 def progress_bar(
     iterable: Iterable,
-    prefix: str = "",
-    suffix: str = "",
     decimals: int = 1,
     length: int = 50,
-    fill: str = "█",
-    print_end: str = "\r",
+    **kwargs: dict,
 ) -> Iterable:
     """
     Displays a terminal progress bar for an iterable.
 
     Args:
         iterable (Iterable): Required. Iterable object to track progress.
-        prefix (str): Optional. Prefix string for the progress bar. Default is "".
-        suffix (str): Optional. Suffix string for the progress bar. Default is "".
         decimals (int): Optional. Number of decimals in percent complete. Default is 1.
         length (int): Optional. Character length of the progress bar. Default is 50.
-        fill (str): Optional. Bar fill character. Default is "█".
-        print_end (str): Optional. End character (e.g., "\r", "\r\n"). Default is "\r".
+        **kwargs (dict): Additional optional arguments:
+            - prefix (str): Prefix string for the progress bar. Default is "".
+            - suffix (str): Suffix string for the progress bar. Default is "".
+            - fill (str): Bar fill character. Default is "█".
+            - print_end (str): End character (e.g., "\r", "\r\n"). Default is "\r".
 
     Yields:
         Iterable: Items from the provided iterable, with progress displayed.
@@ -40,6 +38,10 @@ def progress_bar(
     total = len(iterable)
     start_time = time.time()
     logger = logging.getLogger(__name__)
+    prefix = kwargs.get('prefix', '')
+    suffix = kwargs.get('suffix', '')
+    fill = kwargs.get('fill', '█')
+    print_end = kwargs.get('print_end', '\r')
     errors = {}
 
     def print_progress_bar(iteration: int) -> None:
