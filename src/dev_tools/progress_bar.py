@@ -1,8 +1,8 @@
 """
 progress_bar.py
 
-This module provides a progress bar utility for iterables, with support for debugging and timing
-estimations.
+This module provides a progress bar utility for iterables, with support for
+debugging and timing estimations.
 """
 
 import logging
@@ -11,7 +11,35 @@ from collections.abc import Iterable
 from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
 
 
-# pylint: disable=too-many-arguments
+def _get_estimation_time_remaining(
+    iteration: int,
+    total_iterations: int,
+    start_time: float
+) -> str:
+    """
+    Returns a formatted string with elapsed and remaining time.
+
+    Args:
+        iteration (int): Current iteration number.
+        total_iterations (int): Total number of iterations for the process.
+        start_time (float): The time when the process started, in seconds since the epoch.
+
+    Returns:
+        str: Formatted string with elapsed time and estimated time remaining.
+             If timing is disabled, returns an empty string.
+    """
+    if not is_timing_on():
+        return ""
+
+    et = time.time() - start_time
+    et_str = f"Elapsed time: {human_readable_time(et)}"
+    eta_str = "Time remaining: N/A"
+    if iteration > 0 and et > 0:
+        eta_seconds = et / (iteration / float(total_iterations)) - et
+        eta_str = f"Time remaining: {human_readable_time(eta_seconds)}"
+
+    return f" |--{et_str} - {eta_str}--|"
+
 def progress_bar(
     iterable: Iterable,
     decimals: int = 1,
@@ -57,7 +85,7 @@ def progress_bar(
         percent = f"{100 * (iteration / float(total)):.{decimals}f}"
         filled_length = int(length * iteration // total)
         bar_str = fill * filled_length + "-" * (length - filled_length)
-        time_str = get_estimations(iteration)
+        time_str = _get_estimation_time_remaining(iteration, total, start_time)
 
         try:
             print(
@@ -70,28 +98,6 @@ def progress_bar(
                 logger.exception(
                     "Progress bar is not able to print, DEBUG = %s", is_debug_on()
                 )
-
-    def get_estimations(iteration: int) -> str:
-        """
-        Returns a formatted string with elapsed and remaining time.
-
-        Args:
-            iteration (int): Current iteration number.
-
-        Returns:
-            str: Formatted string with elapsed and remaining time.
-        """
-        if not is_timing_on():
-            return ""
-
-        et = time.time() - start_time
-        et_str = f"Elapsed time: {human_readable_time(et)}"
-        eta_str = "Time remaining: N/A"
-        if iteration > 0 and et > 0:
-            eta_seconds = et / (iteration / float(total)) - et
-            eta_str = f"Time remaining: {human_readable_time(eta_seconds)}"
-
-        return f" |--{et_str} - {eta_str}--|"
 
     print_progress_bar(0)
     for i, item in enumerate(iterable):
