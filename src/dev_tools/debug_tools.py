@@ -42,7 +42,7 @@ def log_exit_code() -> None:
     logger.info("Exit code: %s", exit_code)
 
 
-def logger_setup():
+def logger_setup() -> None:
     """Set up logging configuration based on environment variables and debug mode."""
     atexit.register(log_exit_code)
 
@@ -54,8 +54,11 @@ def logger_setup():
     logger_conf_path = Path(os.getenv("LOGGER_CONF_PATH", "logging.conf"))
     if debug:
         logger_conf_path = Path(os.getenv("LOGGER_CONF_DEV_PATH", "logging_dev.conf"))
+    logger_path = os.getenv("LOGGER_PATH", "./logs")
+    current_year = today.year
+    current_month = f'{today.month}.{today.strftime("%B")}'
     logger_folder_path = (
-        f'{os.getenv("LOGGER_PATH", "./logs")}/{today.strftime("%Y-%m-%d")}'
+        f'{logger_path}/{current_year}/{current_month}'
     )
 
     try:
