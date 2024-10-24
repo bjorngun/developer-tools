@@ -24,11 +24,30 @@ def is_database_logging_on() -> bool:
     return os.getenv("LOGGER_DATABASE", "False").lower() in ["true", "1", "t", "yes"]
 
 
+def is_logs_sorted_by_days() -> bool:
+    """Check if logs should be sorted to a specific folder for each day"""
+    return os.getenv("LOGGER_DAY_SPECIFIC", "False").lower() in ["true", "1", "t", "yes"]
+
+
 def log_exit_code() -> None:
     """Log the exit code of the script."""
     logger = logging.getLogger(__name__)
     exit_code = 0 if sys.exc_info() == (None, None, None) else 1
     logger.info("Exit code: %s", exit_code)
+    
+
+def _get_logger_folder() -> str:
+    today = datetime.now()
+    logger_path = os.getenv("LOGGER_PATH", "./logs")
+    current_year = today.year
+    current_month = f'{today.month}.{today.strftime("%B")}'
+    logger_folder_path = (
+        f'{logger_path}/{current_year}/{current_month}'
+    )
+    if is_logs_sorted_by_days():
+        logger_folder_path = f'{logger_folder_path}/{today.day}'
+        
+    return logger_folder_path
 
 
 def logger_setup() -> None:
@@ -43,23 +62,18 @@ def logger_setup() -> None:
     logger_conf_path = Path(os.getenv("LOGGER_CONF_PATH", "logging.conf"))
     if debug:
         logger_conf_path = Path(os.getenv("LOGGER_CONF_DEV_PATH", "logging_dev.conf"))
-    logger_path = os.getenv("LOGGER_PATH", "./logs")
-    current_year = today.year
-    current_month = f'{today.month}.{today.strftime("%B")}'
-    logger_folder_path = (
-        f'{logger_path}/{current_year}/{current_month}'
-    )
+    logger_path = _get_logger_folder()
 
     try:
-        Path(logger_folder_path).mkdir(parents=True, exist_ok=True)
+        Path(logger_path).mkdir(parents=True, exist_ok=True)
     except Exception as e:
         print(
-            f"Error creating log directory {Path(logger_folder_path)}: {e}",
+            f"Error creating log directory {Path(logger_path)}: {e}",
             file=sys.stderr,
         )
         raise e
 
-    logger_file_path = f'{logger_folder_path}/{today.strftime("%Y-%m-%dT%H%M%S")}.log'
+    logger_file_path = f'{logger_path}/{today.strftime("%Y-%m-%dT%H%M%S")}.log'
     logger_db_table = os.getenv("LOGGER_DB_TABLE", "python_transfer_data_log")
     if logger_conf_path.exists():
         try:
