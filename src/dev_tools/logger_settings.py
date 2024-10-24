@@ -34,7 +34,7 @@ def log_exit_code() -> None:
     logger = logging.getLogger(__name__)
     exit_code = 0 if sys.exc_info() == (None, None, None) else 1
     logger.info("Exit code: %s", exit_code)
-    
+
 
 def _get_logger_folder() -> str:
     today = datetime.now()
@@ -46,7 +46,7 @@ def _get_logger_folder() -> str:
     )
     if is_logs_sorted_by_days():
         logger_folder_path = f'{logger_folder_path}/{today.day}'
-        
+
     return logger_folder_path
 
 
