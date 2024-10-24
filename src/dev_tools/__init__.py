@@ -15,7 +15,8 @@ in Python applications. Included modules are:
 from dev_tools.progress_bar import progress_bar
 from dev_tools.custom_decorators import timing_decorator
 from dev_tools.custom_handlers import LogDBHandler
-from dev_tools.debug_tools import is_debug_on, logger_setup
+from dev_tools.debug_tools import is_debug_on
+from dev_tools.logger_settings import logger_setup
 
 __all__ = [
     "logger_setup",
