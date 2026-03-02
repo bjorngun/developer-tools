@@ -14,7 +14,7 @@
 | Phase | # | Task | Details | Agent | Cost | Complexity | Est. | Refs | Status |
 |-------|---|------|---------|-------|------|------------|------|------|--------|
 | **0 — Setup** | 0 | Create sub-package scaffolding | [Details](#task-0-create-sub-package-scaffolding) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
-| **1 — md_link_checker** | 1 | Move md_link_checker into dev_tools | [Details](#task-1-move-md_link_checker-into-dev_tools) | Copilot | 💚 | Simple | 10 min | | |
+| **1 — md_link_checker** | 1 | Move md_link_checker into dev_tools | [Details](#task-1-move-md_link_checker-into-dev_tools) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 2 | Write tests for md_link_checker | [Details](#task-2-write-tests-for-md_link_checker) | QA Engineer | 💛 | Medium | 25 min | | |
 | **2 — codemap_generator** | 3 | Refactor codemap_generator into sub-package | [Details](#task-3-refactor-codemap_generator-into-sub-package) | Copilot | 💛 | Medium | 20 min | | |
 | | 4 | Generalize hardcoded references | [Details](#task-4-generalize-hardcoded-references) | Copilot | 💛 | Medium | 15 min | | |
@@ -106,6 +106,13 @@ src/
 - All 4 files exist in `src/dev_tools/md_link_checker/`.
 - Relative imports (`.scanner`, `.cli`) remain unchanged.
 - `python -m dev_tools.md_link_checker --help` works.
+
+> **✅ Completed 2026-03-02 (57fb6b5)**
+> - Copied all 4 files (`__init__.py`, `__main__.py`, `cli.py`, `scanner.py`) into `src/dev_tools/md_link_checker/`.
+> - Updated docstring module path references from `md_link_checker` to `dev_tools.md_link_checker`.
+> - Relative imports (`.scanner`, `.cli`) remain unchanged — sub-package works as-is.
+> - Verified: `python -m dev_tools.md_link_checker --help` works, `from dev_tools.md_link_checker import scan_all` works.
+> - **Changelog:** Added — `md_link_checker` sub-package integrated into `dev_tools`.
 
 ---
 
