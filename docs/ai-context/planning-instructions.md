@@ -97,16 +97,29 @@ Examples: `offboarding-plan.md`, `test-suite-reorganization-plan.md`, `smtp-migr
 
 ### After Completing a Phase
 
+> **This is a separate step from per-task completion notes.** Task notes are written *during* execution for the benefit of the next task. The phase summary is written *after all tasks in the phase are done*, for the benefit of future agents who open the plan and need a quick overview without reading stale detail.
+
 1. **Run tests**: `pytest src/tests/ -v` (at minimum after every phase).
-2. **Summarize the phase** — Replace the detailed plan text for completed tasks with a brief summary. **Assemble this from the per-task completion notes** — not from memory. This ensures accuracy even when a phase spans multiple sessions.
-   - What was done (per task)
+2. **Write a phase summary** — This is a **mandatory, distinct deliverable**. Do not skip it, and do not confuse it with the per-task completion notes you already wrote.
+
+   **What to do:** Replace the detailed task sections (What/Files/Acceptance criteria) for all completed tasks in the phase with a single, condensed phase-level summary block. Keep the task headings and their completion notes — remove the original planning detail that is now stale.
+
+   **What to include** (assemble from the per-task completion notes — not from memory):
+   - What was done (per task, 1-2 lines each)
    - Key decisions made (compiled from task notes)
    - Any issues encountered (compiled from task notes)
    - Notes for future phases
    - **Changelog notes** — Compiled from per-task changelog bullets into a single phase-level list
 
-   This saves context for future agents who read the plan — they don't need the full original detail for completed work, just the outcomes.
-3. **Commit** the phase summary update.
+   **Why this matters:** Future agents reading the plan see completed phases as brief summaries and uncompleted phases as full detail. This keeps the plan file lean and navigable. Without this step, the plan accumulates stale detail that wastes context window space and confuses future readers.
+
+3. **Commit** the phase summary update:
+   ```bash
+   git add -A
+   git commit -m "docs: Phase N summary"
+   ```
+
+> **Checklist reminder:** If you use `manage_todo_list` or similar, add an explicit "Write phase summary" item between "Run tests" and "Commit" so this step is never accidentally merged into the commit step.
 
 ---
 
@@ -218,7 +231,30 @@ The key elements:
 
 ### Plan Detail Sections
 
-Each task heading below the Task Index should include at minimum:
+**Phase headings in the plan body:** The Task Index groups tasks into phases, but the detail sections below should also have clear phase boundaries. Use a phase heading before each group of task sections:
+
+```markdown
+---
+
+## Phase 1 — md_link_checker
+
+### Task 1: Move md_link_checker into dev_tools
+...
+
+### Task 2: Write tests for md_link_checker
+...
+
+---
+
+## Phase 2 — codemap_generator
+
+### Task 3: Refactor codemap_generator into sub-package
+...
+```
+
+This makes phases visually distinct in the plan body, not just in the Task Index table. When a phase is completed and summarized, the phase heading remains and the task detail below it is replaced with the condensed summary.
+
+**Each task heading** below its phase heading should include at minimum:
 
 - **What** — What needs to happen (1-3 sentences).
 - **Files** — Which files will be created/modified/deleted.
