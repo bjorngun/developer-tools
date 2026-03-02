@@ -19,8 +19,8 @@
 | **2 — codemap_generator** | 3 | Refactor codemap_generator into sub-package | [Details](#task-3-refactor-codemap_generator-into-sub-package) | Copilot | 💛 | Medium | 20 min | | ✅ Done |
 | | 4 | Generalize hardcoded references | [Details](#task-4-generalize-hardcoded-references) | Copilot | 💛 | Medium | 15 min | | ✅ Done |
 | | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | QA Engineer | 💛 | Medium | 25 min | | ✅ Done |
-| **3 — Packaging** | 6 | Update pyproject.toml and package __init__.py | [Details](#task-6-update-pyprojecttoml-and-package-__init__py) | Copilot | 💚 | Simple | 10 min | | |
-| | 7 | Replace tomllib with regex parser | [Details](#task-7-replace-tomllib-with-regex-parser) | Copilot | 💚 | Simple | 10 min | | |
+| **3 — Packaging** | 6 | Update pyproject.toml and package __init__.py | [Details](#task-6-update-pyprojecttoml-and-package-__init__py) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
+| | 7 | Replace tomllib with regex parser | [Details](#task-7-replace-tomllib-with-regex-parser) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | **4 — Validation** | 8 | Run full test suite and lint | [Details](#task-8-run-full-test-suite-and-lint) | Copilot | 💚 | Simple | 10 min | | |
 | **5 — Cleanup** | 9 | Remove New stuff folder and finalize | [Details](#task-9-remove-new-stuff-folder-and-finalize) | Librarian | 💚 | Simple | 15 min | | |
 
@@ -113,6 +113,24 @@ src/
 - Added — Comprehensive test suite for `codemap_generator` sub-package (70 tests)
 
 **Full test suite:** 162 passed (92 existing + 70 new) in 0.66s.
+
+---
+
+## Phase 3 — Packaging (✅ Complete)
+
+**Task 6: Update pyproject.toml and package __init__.py** — Bumped version from `0.2.0` to `0.3.0`. Updated description to mention new tools. Added `[project.scripts]` section with `md-link-checker` and `codemap-generator` console script entry points. Updated `src/dev_tools/__init__.py` with new imports (`scan_all`, `CodeMapGenerator`), updated `__all__`, and added module docstring entries for both new sub-packages.
+
+**Task 7: Replace tomllib with regex parser** — Removed `import tomllib` from `generator.py`. Replaced `_detect_console_scripts()` with a regex-based parser that reads `pyproject.toml` as plain text: finds `[project.scripts]` section, parses `key = "value"` lines until the next `[` section header. Wrapped in broad `except Exception` for best-effort resilience. No new dependencies. Works on Python 3.10+.
+
+**Key decisions:** None — plan was clear and followed directly.
+**Issues:** None.
+**Changelog:**
+- Changed — Package version bumped to `0.3.0`
+- Added — Console script entry points: `md-link-checker`, `codemap-generator`
+- Added — Top-level exports: `scan_all`, `CodeMapGenerator`
+- Changed — Replaced `tomllib` dependency with stdlib regex-based TOML parser
+
+**Verified:** `pip install -e .` succeeds, both `md-link-checker --help` and `codemap-generator --help` work, all 162 tests pass.
 
 ---
 

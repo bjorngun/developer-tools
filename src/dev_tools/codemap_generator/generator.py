@@ -28,7 +28,6 @@ import ast
 import argparse
 import re
 import sys
-import tomllib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -335,18 +334,31 @@ class CodeMapGenerator:
                 break
 
     def _detect_console_scripts(self) -> None:
-        """Detect console_scripts from pyproject.toml using tomllib."""
+        """Detect console_scripts from pyproject.toml (best-effort regex parse)."""
         pyproject_path = self.src_root.parent / "pyproject.toml"
-        if not pyproject_path.exists():
+        try:
+            content = pyproject_path.read_text(encoding="utf-8")
+        except OSError:
             return
 
         try:
-            with open(pyproject_path, "rb") as f:
-                data = tomllib.load(f)
-
-            # Check for [project.scripts] section
-            scripts = data.get("project", {}).get("scripts", {})
-            for script_name, script_target in scripts.items():
+            # Find [project.scripts] section
+            match = re.search(r"^\[project\.scripts\]\s*$", content, re.MULTILINE)
+            if not match:
+                return
+            section = content[match.end():]
+            # Read until next section header or EOF
+            next_section = re.search(r"^\[", section, re.MULTILINE)
+            if next_section:
+                section = section[:next_section.start()]
+            # Parse key = "value" lines
+            for line_match in re.finditer(
+                r'^\s*([\w-]+)\s*=\s*["\'](.+?)["\']',
+                section,
+                re.MULTILINE,
+            ):
+                script_name = line_match.group(1)
+                script_target = line_match.group(2)
                 self.entry_points.append(
                     EntryPoint(
                         file_path="pyproject.toml",
@@ -354,7 +366,7 @@ class CodeMapGenerator:
                         description=f"{script_name} -> {script_target}",
                     )
                 )
-        except (FileNotFoundError, tomllib.TOMLDecodeError):
+        except Exception:  # noqa: BLE001 — best-effort, never crash
             pass
 
     def _extract_calls(self, tree: ast.Module, file_path: str) -> None:
