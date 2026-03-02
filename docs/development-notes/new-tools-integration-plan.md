@@ -15,7 +15,7 @@
 |-------|---|------|---------|-------|------|------------|------|------|--------|
 | **0 — Setup** | 0 | Create sub-package scaffolding | [Details](#task-0-create-sub-package-scaffolding) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | **1 — md_link_checker** | 1 | Move md_link_checker into dev_tools | [Details](#task-1-move-md_link_checker-into-dev_tools) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
-| | 2 | Write tests for md_link_checker | [Details](#task-2-write-tests-for-md_link_checker) | QA Engineer | 💛 | Medium | 25 min | | |
+| | 2 | Write tests for md_link_checker | [Details](#task-2-write-tests-for-md_link_checker) | QA Engineer | 💛 | Medium | 25 min | | ✅ Done |
 | **2 — codemap_generator** | 3 | Refactor codemap_generator into sub-package | [Details](#task-3-refactor-codemap_generator-into-sub-package) | Copilot | 💛 | Medium | 20 min | | |
 | | 4 | Generalize hardcoded references | [Details](#task-4-generalize-hardcoded-references) | Copilot | 💛 | Medium | 15 min | | |
 | | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | QA Engineer | 💛 | Medium | 25 min | | |
@@ -127,6 +127,13 @@ src/
 **Acceptance criteria:**
 - Tests cover at least: heading slugification, anchor extraction, link resolution (relative + anchor-only), broken link detection, skipping external links, CLI parser arguments.
 - All tests pass with `pytest src/tests/test_md_link_checker.py -v`.
+
+> **✅ Completed 2026-03-02**
+> - Created `src/tests/test_md_link_checker.py` with **51 tests** across 8 test classes.
+> - Coverage: `TestSlugifyHeading` (9), `TestExtractAnchors` (6), `TestFindMarkdownFiles` (4), `TestResolveLinkTarget` (5), `TestCheckLink` (7), `TestScanFile` (5), `TestScanAll` (5), `TestCLI` (8).
+> - All 51 tests pass in 0.22s.
+> - Uses `tmp_path` fixture, `@pytest.mark.parametrize`, class-based grouping.
+> - **Changelog:** Added — Comprehensive test suite for `md_link_checker` sub-package (51 tests).
 
 ---
 
