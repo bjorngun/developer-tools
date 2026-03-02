@@ -309,6 +309,7 @@ Write the entry from a **user/reviewer perspective** (what changed and why), not
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]` (compiled from phase changelog notes)
 - [ ] Documentation updated (Librarian rule)
 - [ ] **Delete the plan file** — it has served its purpose; the knowledge is now in the right docs
+- [ ] **Markdown links valid** — run "Check markdown links" VS Code task **after** deleting the plan file (deletion creates orphaned references)
 - [ ] Final commit:
   ```bash
   git add -A

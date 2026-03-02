@@ -4,7 +4,8 @@
 - **Import name:** `dev_tools`
 - **Source layout:** `src/dev_tools/` (src-layout, installed via `pip install .`)
 - **Python:** `>=3.10`
-- **Purpose:** Reusable utility library for Python developers — logging, decorators, debugging, progress bars, and CLI tools. Imported by multiple other projects.
+- **Purpose:** Reusable utility library for Python developers — logging, decorators, debugging, progress bars, markdown link checking, code map generation, and CLI tools. Imported by multiple other projects.
+- **Version:** `0.3.0`
 
 ---
 
@@ -59,6 +60,20 @@ src/
 - Prefer stdlib solutions over third-party packages.
 - If a feature can work without a dependency (even with reduced functionality), skip the dependency.
 - Current dependencies: `pyodbc`, `python-dotenv` — do not add more without strong justification.
+- Console scripts: `md-link-checker`, `codemap-generator` (registered in `pyproject.toml`).
+
+---
+
+### Public API (`__all__`)
+
+Top-level exports from `dev_tools`:
+- `logger_setup` — logging configuration
+- `is_debug_on` — debug mode check
+- `progress_bar` — iterable progress visualization
+- `timing_decorator` — function execution timing
+- `LogDBHandler` — database logging handler
+- `scan_all` — markdown link checking (`md_link_checker`)
+- `CodeMapGenerator` — AST code map generation (`codemap_generator`)
 
 ---
 

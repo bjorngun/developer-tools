@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/bjorngun/developer-tools/graph/badge.svg?token=LZKYK9IK5K)](https://codecov.io/gh/bjorngun/developer-tools)
 [![License](https://img.shields.io/pypi/l/bosos-dev-tools)](LICENSE)
 
-Bosos Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes custom logging handlers, decorators for measuring execution time, and a progress bar utility to enhance the development workflow.
+Bosos Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes custom logging handlers, decorators for measuring execution time, a progress bar utility, a markdown link checker, and an AST-based code map generator.
 
 ## Features
 
@@ -16,6 +16,8 @@ Bosos Dev Tools is a collection of utility tools for Python developers, designed
 - **Timing Decorators**: Easily measure the execution time of your functions with minimal code changes.
 - **Progress Bar Utility**: Visualize the progress of long-running operations in the console.
 - **Debug Tools**: Check if debug or timing modes are enabled via environment variables.
+- **Markdown Link Checker**: Scan markdown files for broken internal links — available as a library and a CLI tool.
+- **Code Map Generator**: Generate AST-based documentation artifacts (symbol index, dependency graph, entry points, call graph) for any Python package.
 
 ## Installation
 
@@ -60,7 +62,7 @@ example_function()
 
 ### Progress Bar
 
-Use the `progress_bar` to measure the execution time of functions.
+Visualize the progress of long-running iterations in the console.
 
 ``` py
 from dev_tools.progress_bar import progress_bar
@@ -82,13 +84,64 @@ print('Is timing on:', is_timing_on())
 ```
 
 ``` py
-from dev_tools.debug_tools import logger_setup
+from dev_tools.logger_settings import logger_setup
 
 def main():
     logger_setup()
 
 if __name__ == '__main__':
     main()
+```
+
+### Markdown Link Checker
+
+Scan markdown files for broken internal links. Available as a library or a CLI tool.
+
+**As a library:**
+
+``` py
+from dev_tools.md_link_checker import scan_all
+from pathlib import Path
+
+result = scan_all(Path("."))
+for r in result.results:
+    if r.status == "broken":
+        print(f"{r.source_file}:{r.line_number} -> {r.target} ({r.reason})")
+```
+
+**As a CLI:**
+
+```sh
+# Installed console script
+md-link-checker --verbose
+
+# Or run as a module
+python -m dev_tools.md_link_checker --no-anchors --json
+```
+
+### Code Map Generator
+
+Generate AST-based documentation for a Python package — symbol index, dependency graph, entry points, and call graph.
+
+**As a library:**
+
+``` py
+from pathlib import Path
+from dev_tools.codemap_generator import CodeMapGenerator
+
+gen = CodeMapGenerator(src_root=Path("src"), package_name="my_package")
+gen.analyze()
+gen.write_outputs(output_dir=Path("docs"))
+```
+
+**As a CLI:**
+
+```sh
+# Installed console script
+codemap-generator --package my_package
+
+# Or run as a module
+python -m dev_tools.codemap_generator --package my_package --output-dir docs
 ```
 
 ## License
@@ -99,3 +152,4 @@ This project is licensed under the MIT License. See the [LICENSE](https://github
 
 - **Source Code**: [GitHub Repository](https://github.com/bjorngun/developer-tools)
 - **Issue Tracker**: [GitHub Issues](https://github.com/bjorngun/developer-tools/issues)
+- **Changelog**: [CHANGELOG.md](https://github.com/bjorngun/developer-tools/blob/main/CHANGELOG.md)
