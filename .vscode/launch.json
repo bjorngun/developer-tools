@@ -5,18 +5,15 @@
             "name": "Python: Run All Tests",
             "type": "debugpy",
             "request": "launch",
-            "module": "unittest",
+            "module": "pytest",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src"
             },
             "args": [
-                "discover",
-                "-s",
                 "src/tests",
-                "-p",
-                "test_*.py"
+                "-v"
             ],
             "preLaunchTask": "Install test requirements"
         },
@@ -33,28 +30,25 @@
             "preLaunchTask": "Install lint requirements"
         },
         {
-            "name": "Run Tests with Codecov and Generate HTML Coverage Report",
+            "name": "Run Tests with Coverage and Open HTML Report",
             "type": "debugpy",
             "request": "launch",
             "code": "print('No-OP')",
-            "preLaunchTask": "Generate coverage report"
+            "preLaunchTask": "Open coverage report in browser"
         },
         {
             "name": "Clean rebuild and test - re-install python and packages (WARNING: code could possibly not support new packages or newer version of python)",
             "type": "debugpy",
             "request": "launch",
-            "module": "unittest",
+            "module": "pytest",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src"
             },
             "args": [
-                "discover",
-                "-s",
                 "src/tests",
-                "-p",
-                "test_*.py"
+                "-v"
             ],
             "preLaunchTask": "Clean rebuild"
         }

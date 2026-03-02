@@ -66,35 +66,32 @@
             "dependsOn": "Install requirements"
         },
         {
-            "label": "Run tests with coverage",
+            "label": "Run tests",
             "type": "shell",
             "command": "${workspaceFolder}/venv/Scripts/python",
             "args": [
                 "-m",
-                "coverage",
-                "run",
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
+                "pytest",
                 "src/tests",
-                "-p",
-                "test_*.py"
+                "-v"
             ],
             "problemMatcher": [],
             "group": "build"
         },
         {
-            "label": "Generate coverage report",
+            "label": "Run tests with coverage",
             "type": "shell",
             "command": "${workspaceFolder}/venv/Scripts/python",
             "args": [
                 "-m",
-                "coverage",
-                "html"
+                "pytest",
+                "src/tests",
+                "--cov=dev_tools",
+                "--cov-report=html",
+                "-v"
             ],
             "problemMatcher": [],
-            "dependsOn": "Run tests with coverage"
+            "group": "build"
         },
         {
             "label": "Open coverage report in browser",
@@ -106,7 +103,7 @@
                 "file://${workspaceFolder}/htmlcov/index.html"
             ],
             "problemMatcher": [],
-            "dependsOn": "Generate coverage report"
+            "dependsOn": "Run tests with coverage"
         },
         {
             "label": "Copy venv folder - for cleanRebuild",

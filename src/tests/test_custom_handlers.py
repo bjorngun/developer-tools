@@ -1,18 +1,13 @@
-import unittest
 from unittest.mock import patch, MagicMock, call
 import logging
 import os
-import getpass
-from datetime import datetime
 from pathlib import Path
 import pyodbc
-import sys
 
-# Correct import statement
 from dev_tools.custom_handlers import LogDBHandler
 
 
-class TestLogDBHandler(unittest.TestCase):
+class TestLogDBHandler:
 
     @patch("dev_tools.custom_handlers.pyodbc.connect")
     @patch("dev_tools.custom_handlers.os.getenv")
@@ -27,12 +22,12 @@ class TestLogDBHandler(unittest.TestCase):
         mock_connect.return_value.cursor.return_value = mock_cursor
 
         handler = LogDBHandler("test_table")
-        self.assertIsNotNone(handler.sql_cursor)
+        assert handler.sql_cursor is not None
         mock_connect.assert_called_once()
 
     @patch("dev_tools.custom_handlers.pyodbc.connect")
     @patch("dev_tools.custom_handlers.os.getenv")
-    def test_sql_connection_init_failure(self, mock_getenv, mock_connect):
+    def test_sql_connection_init_failure(self, mock_getenv, mock_connect, caplog):
         mock_getenv.side_effect = lambda key: {
             "LOGGER_DB_SERVER": "test_server",
             "LOGGER_DB_NAME": "test_db",
@@ -41,12 +36,10 @@ class TestLogDBHandler(unittest.TestCase):
 
         mock_connect.side_effect = pyodbc.Error("Connection error")
 
-        with self.assertLogs("sql_logger", level="ERROR") as log:
+        with caplog.at_level(logging.ERROR, logger="sql_logger"):
             handler = LogDBHandler("test_table")
-            self.assertIsNone(handler.sql_cursor)
-            self.assertIn(
-                "Failed to connect to database: Connection error", log.output[0]
-            )
+            assert handler.sql_cursor is None
+            assert "Failed to connect to database: Connection error" in caplog.text
 
     @patch("dev_tools.custom_handlers.getpass.getuser", return_value="test_user")
     @patch("dev_tools.custom_handlers.datetime")
@@ -93,7 +86,7 @@ class TestLogDBHandler(unittest.TestCase):
                 os.getpid(),
             ],
         )
-        self.assertIn(expected_call, mock_cursor.execute.call_args_list)
+        assert expected_call in mock_cursor.execute.call_args_list
 
     @patch("dev_tools.custom_handlers.getpass.getuser", return_value="test_user")
     @patch("dev_tools.custom_handlers.datetime")
@@ -143,8 +136,4 @@ class TestLogDBHandler(unittest.TestCase):
                 os.getpid(),
             ],
         )
-        self.assertIn(expected_call, mock_cursor.execute.call_args_list)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert expected_call in mock_cursor.execute.call_args_list

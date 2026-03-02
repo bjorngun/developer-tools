@@ -13,16 +13,16 @@
 
 | Phase | # | Task | Details | Agent | Cost | Complexity | Est. | Refs | Status |
 |-------|---|------|---------|-------|------|------------|------|------|--------|
-| **0 — Setup** | 0 | Create sub-package scaffolding | [Details](#task-0-create-sub-package-scaffolding) | Copilot | 💚 | Simple | 10 min | | |
+| **0 — Setup** | 0 | Create sub-package scaffolding | [Details](#task-0-create-sub-package-scaffolding) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | **1 — md_link_checker** | 1 | Move md_link_checker into dev_tools | [Details](#task-1-move-md_link_checker-into-dev_tools) | Copilot | 💚 | Simple | 10 min | | |
-| | 2 | Write tests for md_link_checker | [Details](#task-2-write-tests-for-md_link_checker) | Copilot | 💛 | Medium | 25 min | | |
+| | 2 | Write tests for md_link_checker | [Details](#task-2-write-tests-for-md_link_checker) | QA Engineer | 💛 | Medium | 25 min | | |
 | **2 — codemap_generator** | 3 | Refactor codemap_generator into sub-package | [Details](#task-3-refactor-codemap_generator-into-sub-package) | Copilot | 💛 | Medium | 20 min | | |
 | | 4 | Generalize hardcoded references | [Details](#task-4-generalize-hardcoded-references) | Copilot | 💛 | Medium | 15 min | | |
-| | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | Copilot | 💛 | Medium | 25 min | | |
+| | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | QA Engineer | 💛 | Medium | 25 min | | |
 | **3 — Packaging** | 6 | Update pyproject.toml and package __init__.py | [Details](#task-6-update-pyprojecttoml-and-package-__init__py) | Copilot | 💚 | Simple | 10 min | | |
-| | 7 | Handle tomllib compatibility for Python 3.10 | [Details](#task-7-handle-tomllib-compatibility-for-python-310) | Copilot | 💚 | Simple | 10 min | | |
+| | 7 | Replace tomllib with regex parser | [Details](#task-7-replace-tomllib-with-regex-parser) | Copilot | 💚 | Simple | 10 min | | |
 | **4 — Validation** | 8 | Run full test suite and lint | [Details](#task-8-run-full-test-suite-and-lint) | Copilot | 💚 | Simple | 10 min | | |
-| **5 — Cleanup** | 9 | Remove New stuff folder and finalize | [Details](#task-9-remove-new-stuff-folder-and-finalize) | Copilot | 💚 | Simple | 15 min | | |
+| **5 — Cleanup** | 9 | Remove New stuff folder and finalize | [Details](#task-9-remove-new-stuff-folder-and-finalize) | Librarian | 💚 | Simple | 15 min | | |
 
 ---
 
@@ -85,6 +85,11 @@ src/
 - Both directories exist under `src/dev_tools/`.
 - No files moved yet — just the structure.
 
+> **✅ Completed 2026-03-02**
+> - Created `src/dev_tools/md_link_checker/` and `src/dev_tools/codemap_generator/` directories.
+> - No files moved — structure only.
+> - **Changelog:** Added — Sub-package directory scaffolding for `md_link_checker` and `codemap_generator`.
+
 ---
 
 ### Task 1: Move md_link_checker into dev_tools
@@ -106,15 +111,15 @@ src/
 
 ### Task 2: Write tests for md_link_checker
 
-**What:** Create `src/tests/test_md_link_checker.py` with unit tests covering the core scanner logic: `slugify_heading`, `extract_anchors`, `find_markdown_files`, `resolve_link_target`, `check_link`, `scan_file`, and the CLI `build_parser`. Follow the existing `unittest` pattern used by other tests in the project.
+**What:** Create `src/tests/test_md_link_checker.py` with pytest-style tests covering the core scanner logic: `slugify_heading`, `extract_anchors`, `find_markdown_files`, `resolve_link_target`, `check_link`, `scan_file`, and the CLI `build_parser`.
 
 **Files:**
 - CREATE `src/tests/test_md_link_checker.py`
-- CREATE temporary test fixture markdown files (in a temp dir during tests)
+- CREATE temporary test fixture markdown files (in a temp dir during tests via `tmp_path` fixture)
 
 **Acceptance criteria:**
 - Tests cover at least: heading slugification, anchor extraction, link resolution (relative + anchor-only), broken link detection, skipping external links, CLI parser arguments.
-- All tests pass with `python -m unittest src/tests/test_md_link_checker.py`.
+- All tests pass with `pytest src/tests/test_md_link_checker.py -v`.
 
 ---
 
@@ -156,14 +161,14 @@ src/
 
 ### Task 5: Write tests for codemap_generator
 
-**What:** Create `src/tests/test_codemap_generator.py` with unit tests covering: `SymbolInfo`/`ImportInfo` dataclasses, `CodeMapGenerator.analyze()` on a small fixture package, symbol extraction, import extraction, entry point detection, and output generation. Follow the existing `unittest` pattern.
+**What:** Create `src/tests/test_codemap_generator.py` with pytest-style tests covering: `SymbolInfo`/`ImportInfo` dataclasses, `CodeMapGenerator.analyze()` on a small fixture package, symbol extraction, import extraction, entry point detection, and output generation.
 
 **Files:**
 - CREATE `src/tests/test_codemap_generator.py`
 
 **Acceptance criteria:**
 - Tests cover at least: dataclass creation, AST analysis on a fixture file, symbol/import extraction, markdown output generation.
-- All tests pass with `python -m unittest src/tests/test_codemap_generator.py`.
+- All tests pass with `pytest src/tests/test_codemap_generator.py -v`.
 
 ---
 
@@ -199,34 +204,60 @@ codemap-generator = "dev_tools.codemap_generator:main"
 
 ---
 
-### Task 7: Handle tomllib compatibility for Python 3.10
+### Task 7: Replace tomllib with regex parser
 
-**What:** `codemap_generator` uses `tomllib` which is only available in Python 3.11+. Since the project supports `>=3.10`, add a compatibility shim:
+**What:** Remove the `tomllib` import entirely. Replace `_detect_console_scripts()` with a simple regex-based parser that reads `pyproject.toml` as plain text. The `[project.scripts]` section is simple `key = "value"` pairs, so a regex can handle the common case. If parsing fails for any reason (malformed TOML, unusual formatting, file not found), silently skip — this is a "nice to have" feature, not critical.
+
+Approach:
+1. Remove `import tomllib`.
+2. Read `pyproject.toml` as UTF-8 text.
+3. Find the `[project.scripts]` section with a regex.
+4. Parse `name = "module.path:func"` lines until the next `[` section header.
+5. Wrap everything in a broad `except Exception` so it never crashes.
 
 ```python
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib  # type: ignore[no-redef]
-```
+def _detect_console_scripts(self) -> None:
+    """Detect console_scripts from pyproject.toml (best-effort regex parse)."""
+    pyproject_path = self.src_root.parent / "pyproject.toml"
+    try:
+        content = pyproject_path.read_text(encoding="utf-8")
+    except OSError:
+        return
 
-And add `tomli` as a conditional dependency in `pyproject.toml`:
-
-```toml
-dependencies = [
-    'pyodbc',
-    'python-dotenv',
-    'tomli; python_version < "3.11"',
-]
+    try:
+        # Find [project.scripts] section
+        match = re.search(r"^\[project\.scripts\]\s*$", content, re.MULTILINE)
+        if not match:
+            return
+        section = content[match.end():]
+        # Read until next section header or EOF
+        next_section = re.search(r"^\[", section, re.MULTILINE)
+        if next_section:
+            section = section[:next_section.start()]
+        # Parse key = "value" lines
+        for line_match in re.finditer(r'^\s*([\w-]+)\s*=\s*["\'](.+?)["\']', section, re.MULTILINE):
+            script_name = line_match.group(1)
+            script_target = line_match.group(2)
+            self.entry_points.append(
+                EntryPoint(
+                    file_path="pyproject.toml",
+                    entry_type="console_script",
+                    description=f"{script_name} -> {script_target}",
+                )
+            )
+    except Exception:  # noqa: BLE001 — best-effort, never crash
+        pass
 ```
 
 **Files:**
-- MODIFY `src/dev_tools/codemap_generator/generator.py` (add import shim)
-- MODIFY `pyproject.toml` (add conditional dependency)
+- MODIFY `src/dev_tools/codemap_generator/generator.py` (remove `tomllib`, rewrite method)
 
 **Acceptance criteria:**
-- Package installs cleanly on Python 3.10 and 3.11+.
-- `tomllib`/`tomli` import works on both versions.
+- No `tomllib` or `tomli` import anywhere in the codebase.
+- No new dependencies added to `pyproject.toml`.
+- Console script detection works on a standard `pyproject.toml`.
+- If parsing fails, the tool continues without error.
+- Works on all supported Python versions (3.10+).
 
 ---
 
@@ -237,7 +268,7 @@ dependencies = [
 **Files:** (potential fixes in any of the new files)
 
 **Acceptance criteria:**
-- `python -m unittest discover -s src/tests -p "test_*.py"` — all tests pass.
+- `pytest src/tests/ -v` — all tests pass.
 - `pip install .` succeeds.
 - `md-link-checker --help` prints usage.
 - `codemap-generator --help` prints usage.

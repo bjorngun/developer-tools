@@ -29,11 +29,16 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    'coverage',
+    'pytest',
+    'pytest-cov',
 ]
 lint = [
     'pylint',
 ]
+
+[tool.pytest.ini_options]
+testpaths = ['src/tests']
+pythonpath = ['src']
 
 [project.urls]
 Source = 'https://github.com/bjorngun/developer-tools'

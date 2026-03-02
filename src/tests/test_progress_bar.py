@@ -1,10 +1,9 @@
-import unittest
 import os
 from unittest.mock import patch
 from dev_tools.progress_bar import progress_bar
 
 
-class TestProgressBar(unittest.TestCase):
+class TestProgressBar:
 
     @patch("builtins.print")
     @patch.dict(os.environ, {"DEBUG": "true", "TIMING": "true"})
@@ -12,9 +11,5 @@ class TestProgressBar(unittest.TestCase):
         items = list(range(10))
         result = list(progress_bar(items))
 
-        self.assertEqual(result, items)
-        self.assertTrue(mock_print.called)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert result == items
+        assert mock_print.called
