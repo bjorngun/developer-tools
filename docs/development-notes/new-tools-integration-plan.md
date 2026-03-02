@@ -69,73 +69,34 @@ src/
 
 ---
 
-## Task Details
+## Phase 0 — Setup (✅ Complete)
+
+**Task 0: Create sub-package scaffolding** — Created `src/dev_tools/md_link_checker/` and `src/dev_tools/codemap_generator/` empty directories. No files moved — structure only.
+
+- Commit: `57fb6b5`
+- **Changelog:** Added — Sub-package directory scaffolding for `md_link_checker` and `codemap_generator`.
 
 ---
 
-### Task 0: Create sub-package scaffolding
+## Phase 1 — md_link_checker (✅ Complete)
 
-**What:** Create the empty directory structure for both new sub-packages inside `src/dev_tools/`.
+**Task 1: Move md_link_checker into dev_tools** — Copied all 4 files (`__init__.py`, `__main__.py`, `cli.py`, `scanner.py`) into `src/dev_tools/md_link_checker/`. Updated docstring module path references. Relative imports unchanged — worked as-is. Verified `python -m dev_tools.md_link_checker --help` and `from dev_tools.md_link_checker import scan_all`.
 
-**Files:**
-- CREATE `src/dev_tools/md_link_checker/` (directory)
-- CREATE `src/dev_tools/codemap_generator/` (directory)
+**Task 2: Write tests for md_link_checker** — Created `src/tests/test_md_link_checker.py` with 51 tests across 8 classes (`TestSlugifyHeading`, `TestExtractAnchors`, `TestFindMarkdownFiles`, `TestResolveLinkTarget`, `TestCheckLink`, `TestScanFile`, `TestScanAll`, `TestCLI`). Uses `tmp_path`, `@pytest.mark.parametrize`, class-based grouping. All pass in 0.22s.
 
-**Acceptance criteria:**
-- Both directories exist under `src/dev_tools/`.
-- No files moved yet — just the structure.
+**Key decisions:** None — sub-package was already well-structured, no redesign needed.
+**Issues:** None.
+**Notes for future phases:** None.
 
-> **✅ Completed 2026-03-02**
-> - Created `src/dev_tools/md_link_checker/` and `src/dev_tools/codemap_generator/` directories.
-> - No files moved — structure only.
-> - **Changelog:** Added — Sub-package directory scaffolding for `md_link_checker` and `codemap_generator`.
+**Changelog:**
+- Added — `md_link_checker` sub-package integrated into `dev_tools`
+- Added — Comprehensive test suite for `md_link_checker` sub-package (51 tests)
 
----
-
-### Task 1: Move md_link_checker into dev_tools
-
-**What:** Copy the 4 files from `New stuff/md_link_checker/` into `src/dev_tools/md_link_checker/`. This sub-package is already well-structured with relative imports so it should work as-is. Update the `__main__.py` module path reference if needed.
-
-**Files:**
-- CREATE `src/dev_tools/md_link_checker/__init__.py` (from `New stuff/md_link_checker/__init__.py`)
-- CREATE `src/dev_tools/md_link_checker/__main__.py` (from `New stuff/md_link_checker/__main__.py`)
-- CREATE `src/dev_tools/md_link_checker/cli.py` (from `New stuff/md_link_checker/cli.py`)
-- CREATE `src/dev_tools/md_link_checker/scanner.py` (from `New stuff/md_link_checker/scanner.py`)
-
-**Acceptance criteria:**
-- All 4 files exist in `src/dev_tools/md_link_checker/`.
-- Relative imports (`.scanner`, `.cli`) remain unchanged.
-- `python -m dev_tools.md_link_checker --help` works.
-
-> **✅ Completed 2026-03-02 (57fb6b5)**
-> - Copied all 4 files (`__init__.py`, `__main__.py`, `cli.py`, `scanner.py`) into `src/dev_tools/md_link_checker/`.
-> - Updated docstring module path references from `md_link_checker` to `dev_tools.md_link_checker`.
-> - Relative imports (`.scanner`, `.cli`) remain unchanged — sub-package works as-is.
-> - Verified: `python -m dev_tools.md_link_checker --help` works, `from dev_tools.md_link_checker import scan_all` works.
-> - **Changelog:** Added — `md_link_checker` sub-package integrated into `dev_tools`.
+**Full test suite:** 92 passed (41 existing + 51 new) in 0.73s.
 
 ---
 
-### Task 2: Write tests for md_link_checker
-
-**What:** Create `src/tests/test_md_link_checker.py` with pytest-style tests covering the core scanner logic: `slugify_heading`, `extract_anchors`, `find_markdown_files`, `resolve_link_target`, `check_link`, `scan_file`, and the CLI `build_parser`.
-
-**Files:**
-- CREATE `src/tests/test_md_link_checker.py`
-- CREATE temporary test fixture markdown files (in a temp dir during tests via `tmp_path` fixture)
-
-**Acceptance criteria:**
-- Tests cover at least: heading slugification, anchor extraction, link resolution (relative + anchor-only), broken link detection, skipping external links, CLI parser arguments.
-- All tests pass with `pytest src/tests/test_md_link_checker.py -v`.
-
-> **✅ Completed 2026-03-02**
-> - Created `src/tests/test_md_link_checker.py` with **51 tests** across 8 test classes.
-> - Coverage: `TestSlugifyHeading` (9), `TestExtractAnchors` (6), `TestFindMarkdownFiles` (4), `TestResolveLinkTarget` (5), `TestCheckLink` (7), `TestScanFile` (5), `TestScanAll` (5), `TestCLI` (8).
-> - All 51 tests pass in 0.22s.
-> - Uses `tmp_path` fixture, `@pytest.mark.parametrize`, class-based grouping.
-> - **Changelog:** Added — Comprehensive test suite for `md_link_checker` sub-package (51 tests).
-
----
+## Phase 2 — codemap_generator
 
 ### Task 3: Refactor codemap_generator into sub-package
 
@@ -185,6 +146,8 @@ src/
 - All tests pass with `pytest src/tests/test_codemap_generator.py -v`.
 
 ---
+
+## Phase 3 — Packaging
 
 ### Task 6: Update pyproject.toml and package __init__.py
 
@@ -275,6 +238,8 @@ def _detect_console_scripts(self) -> None:
 
 ---
 
+## Phase 4 — Validation
+
 ### Task 8: Run full test suite and lint
 
 **What:** Run the complete test suite and fix any issues. Verify the package installs and both CLI entry points work.
@@ -290,6 +255,8 @@ def _detect_console_scripts(self) -> None:
 - `python -m dev_tools.codemap_generator --help` works.
 
 ---
+
+## Phase 5 — Cleanup
 
 ### Task 9: Remove New stuff folder and finalize
 
