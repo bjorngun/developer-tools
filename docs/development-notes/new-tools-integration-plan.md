@@ -16,9 +16,9 @@
 | **0 — Setup** | 0 | Create sub-package scaffolding | [Details](#task-0-create-sub-package-scaffolding) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | **1 — md_link_checker** | 1 | Move md_link_checker into dev_tools | [Details](#task-1-move-md_link_checker-into-dev_tools) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 2 | Write tests for md_link_checker | [Details](#task-2-write-tests-for-md_link_checker) | QA Engineer | 💛 | Medium | 25 min | | ✅ Done |
-| **2 — codemap_generator** | 3 | Refactor codemap_generator into sub-package | [Details](#task-3-refactor-codemap_generator-into-sub-package) | Copilot | 💛 | Medium | 20 min | | |
-| | 4 | Generalize hardcoded references | [Details](#task-4-generalize-hardcoded-references) | Copilot | 💛 | Medium | 15 min | | |
-| | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | QA Engineer | 💛 | Medium | 25 min | | |
+| **2 — codemap_generator** | 3 | Refactor codemap_generator into sub-package | [Details](#task-3-refactor-codemap_generator-into-sub-package) | Copilot | 💛 | Medium | 20 min | | ✅ Done |
+| | 4 | Generalize hardcoded references | [Details](#task-4-generalize-hardcoded-references) | Copilot | 💛 | Medium | 15 min | | ✅ Done |
+| | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | QA Engineer | 💛 | Medium | 25 min | | ✅ Done |
 | **3 — Packaging** | 6 | Update pyproject.toml and package __init__.py | [Details](#task-6-update-pyprojecttoml-and-package-__init__py) | Copilot | 💚 | Simple | 10 min | | |
 | | 7 | Replace tomllib with regex parser | [Details](#task-7-replace-tomllib-with-regex-parser) | Copilot | 💚 | Simple | 10 min | | |
 | **4 — Validation** | 8 | Run full test suite and lint | [Details](#task-8-run-full-test-suite-and-lint) | Copilot | 💚 | Simple | 10 min | | |
@@ -96,7 +96,25 @@ src/
 
 ---
 
-## Phase 2 — codemap_generator
+## Phase 2 — codemap_generator (✅ Complete)
+
+**Task 3: Refactor codemap_generator into sub-package** — Split the 846-line single file into a proper sub-package: `generator.py` (all dataclasses + `CodeMapGenerator` class + `main()`), `__init__.py` (public API re-exports), `__main__.py` (enables `python -m`). Verified `from dev_tools.codemap_generator import CodeMapGenerator` and `python -m dev_tools.codemap_generator --help` both work.
+
+**Task 4: Generalize hardcoded references** — Removed all `dw_to_ad` hardcoded references. Made `--package` a required CLI argument. Updated module docstring, CLI description, output headers (e.g. `# Code Map — {package_name}`), and dependency graph text to use the configured package name. Zero `dw_to_ad` strings remain.
+
+**Task 5: Write tests for codemap_generator** — Created `src/tests/test_codemap_generator.py` with 70 tests across 10 classes (`TestSymbolInfo`, `TestImportInfo`, `TestEntryPoint`, `TestCallInfo`, `TestCodeMapGeneratorAnalyze`, `TestSymbolExtraction`, `TestImportExtraction`, `TestEntryPointDetection`, `TestOutputGeneration`, `TestWriteOutputs`, `TestCLI`, `TestCallGraph`, `TestEdgeCases`). Uses `tmp_path` fixtures, `@pytest.mark.parametrize`, class-based grouping. All pass in 0.66s.
+
+**Key decisions:** Tasks 3 and 4 were done together since the file was being created from scratch.
+**Issues:** None.
+**Commit:** `6fbe311`
+**Changelog:**
+- Added — `codemap_generator` sub-package integrated into `dev_tools`
+- Changed — `--package` CLI argument is now required (no hardcoded default)
+- Added — Comprehensive test suite for `codemap_generator` sub-package (70 tests)
+
+**Full test suite:** 162 passed (92 existing + 70 new) in 0.66s.
+
+---
 
 ### Task 3: Refactor codemap_generator into sub-package
 
