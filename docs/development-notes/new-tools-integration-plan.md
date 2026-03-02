@@ -21,7 +21,7 @@
 | | 5 | Write tests for codemap_generator | [Details](#task-5-write-tests-for-codemap_generator) | QA Engineer | 💛 | Medium | 25 min | | ✅ Done |
 | **3 — Packaging** | 6 | Update pyproject.toml and package __init__.py | [Details](#task-6-update-pyprojecttoml-and-package-__init__py) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 7 | Replace tomllib with regex parser | [Details](#task-7-replace-tomllib-with-regex-parser) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
-| **4 — Validation** | 8 | Run full test suite and lint | [Details](#task-8-run-full-test-suite-and-lint) | Copilot | 💚 | Simple | 10 min | | |
+| **4 — Validation** | 8 | Run full test suite and lint | [Details](#task-8-run-full-test-suite-and-lint) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | **5 — Cleanup** | 9 | Remove New stuff folder and finalize | [Details](#task-9-remove-new-stuff-folder-and-finalize) | Librarian | 💚 | Simple | 15 min | | |
 
 ---
@@ -131,6 +131,21 @@ src/
 - Changed — Replaced `tomllib` dependency with stdlib regex-based TOML parser
 
 **Verified:** `pip install -e .` succeeds, both `md-link-checker --help` and `codemap-generator --help` work, all 162 tests pass.
+
+---
+
+## Phase 4 — Validation (✅ Complete)
+
+**Task 8: Run full test suite and lint** — All acceptance criteria verified:
+- `pytest src/tests/ -v` — **162 passed** in 0.75s (zero failures).
+- `pip install .` — succeeds, installs `bosos-dev-tools 0.3.0`.
+- `md-link-checker --help` — prints usage.
+- `codemap-generator --help` — prints usage.
+- `python -m dev_tools.md_link_checker --help` — works.
+- `python -m dev_tools.codemap_generator --help` — works.
+- Pylint (errors-only): 6 `E0213` false positives on the nested `CallVisitor` class which uses `visitor_self` to avoid shadowing the outer `self` — standard pattern, no real errors.
+
+**Issues:** None.
 
 ---
 
