@@ -1,0 +1,282 @@
+name: Version & Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  version-bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    # Only run on direct pushes OR merged PRs (not closed without merge)
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    # Prevent concurrent version bumps - queue them instead of running in parallel
+    concurrency:
+      group: version-bump-${{ github.repository }}
+      cancel-in-progress: false
+
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.determine-bump.outputs.bump_type }}
+      pr_body: ${{ steps.pr-info.outputs.pr_body }}
+      pr_title: ${{ steps.pr-info.outputs.pr_title }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync with latest main
+        run: |
+          # For merged PRs, the checkout gets the merge commit which may not have
+          # the latest version bump commits. Pull to ensure we read the current version.
+          git fetch origin main
+          git reset --hard origin/main
+          echo "Synced to latest main: $(git rev-parse HEAD)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: '3.12'
+
+      - name: Install toml package
+        run: pip install toml
+
+      - name: Capture PR information
+        id: pr-info
+        if: github.event_name == 'pull_request'
+        run: |
+          # Save PR body to file (handles multiline)
+          cat << 'PRBODYEOF' > pr_body.md
+          ${{ github.event.pull_request.body }}
+          PRBODYEOF
+
+          # Output PR title
+          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+
+          # For the body, we need to escape it for output
+          # Save to artifact instead of output (handles multiline better)
+          echo "pr_body_file=pr_body.md" >> $GITHUB_OUTPUT
+
+      - name: Upload PR body as artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: pr-description
+          path: pr_body.md
+          retention-days: 1
+
+      - name: Determine bump type
+        id: determine-bump
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # PR merged = minor bump (Y)
+            echo "bump_type=minor" >> $GITHUB_OUTPUT
+            echo "Bump type: MINOR (PR merged)"
+          else
+            # Direct push = patch bump (Z)
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
+            echo "Bump type: PATCH (direct push)"
+          fi
+
+      - name: Bump version in pyproject.toml
+        id: bump
+        run: |
+          python << 'EOF'
+          import toml
+          import os
+
+          bump_type = "${{ steps.determine-bump.outputs.bump_type }}"
+
+          # Read current version
+          with open('pyproject.toml', 'r') as f:
+              config = toml.load(f)
+
+          current_version = config['project']['version']
+          major, minor, patch = map(int, current_version.split('.'))
+
+          # Bump version based on type
+          if bump_type == 'minor':
+              minor += 1
+              patch = 0  # Reset patch on minor bump
+          else:  # patch
+              patch += 1
+
+          new_version = f"{major}.{minor}.{patch}"
+
+          # Update pyproject.toml
+          config['project']['version'] = new_version
+          with open('pyproject.toml', 'w') as f:
+              toml.dump(config, f)
+
+          print(f"Version bumped: {current_version} -> {new_version}")
+
+          # Set output
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"new_version={new_version}\n")
+              f.write(f"old_version={current_version}\n")
+          EOF
+
+      - name: Update CHANGELOG.md
+        if: github.event_name == 'pull_request'
+        run: |
+          python << 'EOF'
+          import re
+          from datetime import datetime
+
+          new_version = "${{ steps.bump.outputs.new_version }}"
+          pr_title = "${{ github.event.pull_request.title }}"
+          pr_number = "${{ github.event.pull_request.number }}"
+          today = datetime.now().strftime("%Y-%m-%d")
+
+          # Read current changelog
+          with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+              changelog = f.read()
+
+          # --- Extract existing [Unreleased] content ---
+          # Match everything between ## [Unreleased] and the next ## [ heading
+          unreleased_match = re.search(
+              r'## \[Unreleased\]\s*\n(.*?)(?=\n## \[)',
+              changelog,
+              re.DOTALL,
+          )
+          unreleased_content = ""
+          if unreleased_match:
+              unreleased_content = unreleased_match.group(1).strip()
+
+          if unreleased_content:
+              # --- Use hand-written [Unreleased] content as the new version entry ---
+              new_entry = f"## [{new_version}] - {today}\n\n{unreleased_content}"
+              print(f"Using hand-written [Unreleased] content for v{new_version}")
+          else:
+              # --- Fallback: generate entry from PR title ---
+              entry_type = "Changed"
+              if pr_title.lower().startswith('feat'):
+                  entry_type = "Added"
+              elif pr_title.lower().startswith('fix'):
+                  entry_type = "Fixed"
+              elif pr_title.lower().startswith('docs'):
+                  entry_type = "Documentation"
+              elif pr_title.lower().startswith('refactor'):
+                  entry_type = "Changed"
+              elif pr_title.lower().startswith('perf'):
+                  entry_type = "Performance"
+              elif pr_title.lower().startswith('test'):
+                  entry_type = "Testing"
+
+              clean_title = re.sub(
+                  r'^(feat|fix|docs|refactor|perf|test|chore|style|ci)(\(.+?\))?:\s*',
+                  '', pr_title, flags=re.IGNORECASE,
+              )
+              new_entry = f"## [{new_version}] - {today}\n\n### {entry_type}\n\n- {clean_title} (#{pr_number})"
+              print(f"No [Unreleased] content found — generated entry from PR title for v{new_version}")
+
+          # --- Replace: clear [Unreleased] and insert versioned entry ---
+          if '## [Unreleased]' in changelog:
+              # Replace [Unreleased] + its content + next heading boundary
+              changelog = re.sub(
+                  r'(## \[Unreleased\])\s*\n.*?(?=\n## \[)',
+                  f'\\1\n\n{new_entry}\n',
+                  changelog,
+                  count=1,
+                  flags=re.DOTALL,
+              )
+          else:
+              # No [Unreleased] section — insert before first version heading
+              lines = changelog.split('\n')
+              insert_pos = 0
+              for i, line in enumerate(lines):
+                  if line.startswith('## [') and 'Unreleased' not in line:
+                      insert_pos = i
+                      break
+              if insert_pos > 0:
+                  lines.insert(insert_pos, f'{new_entry}\n')
+                  changelog = '\n'.join(lines)
+
+          with open('CHANGELOG.md', 'w', encoding='utf-8') as f:
+              f.write(changelog)
+
+          print(f"Added changelog entry for v{new_version}")
+          EOF
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml CHANGELOG.md
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]" || echo "No changes to commit"
+          git push
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: version-bump
+    # Only create releases for minor bumps (merged PRs)
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download PR description
+        uses: actions/download-artifact@v8.0.0
+        with:
+          name: pr-description
+          path: .
+
+      - name: Create Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull origin main
+          git tag -a "v${{ needs.version-bump.outputs.new_version }}" -m "Release v${{ needs.version-bump.outputs.new_version }}"
+          git push origin "v${{ needs.version-bump.outputs.new_version }}"
+
+      - name: Prepare Release Notes
+        id: release-notes
+        run: |
+          VERSION="${{ needs.version-bump.outputs.new_version }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          # Create release notes from PR description
+          cat << 'HEADER' > release_notes.md
+
+          HEADER
+
+          # Add PR title as header
+          echo "## ${PR_TITLE} (#${PR_NUMBER})" >> release_notes.md
+          echo "" >> release_notes.md
+
+          # Add the full PR description
+          if [ -f pr_body.md ] && [ -s pr_body.md ]; then
+            cat pr_body.md >> release_notes.md
+          else
+            echo "No detailed description provided." >> release_notes.md
+          fi
+
+          echo "Release notes prepared for v${VERSION}"
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: v${{ needs.version-bump.outputs.new_version }}
+          name: Release v${{ needs.version-bump.outputs.new_version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
