@@ -58,7 +58,6 @@ class TestMainOutput:
         assert "logger_setup" in output
         assert "timing_decorator" in output
         assert "progress_bar" in output
-        assert "LogDBHandler" in output
         assert "scan_all" in output
         assert "CodeMapGenerator" in output
 
@@ -68,7 +67,7 @@ class TestMainOutput:
         assert "DEBUG" in output
         assert "TIMING" in output
         assert "LOGGER_PATH" in output
-        assert "LOGGER_DATABASE" in output
+        assert "LOGGER_DAY_SPECIFIC" in output
 
     def test_cli_flag(self):
         """--cli should show CLI tools."""

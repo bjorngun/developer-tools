@@ -7,13 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-03
+
+### Removed
+
+- **`LogDBHandler`** — deprecated database logging handler and `custom_handlers` module removed.
+- **`pyodbc` dependency** — no longer required.
+- **`is_database_logging_on()`** helper from `logger_settings`.
+- **`LOGGER_DATABASE`** and **`LOGGER_DB_TABLE`** environment variables no longer supported.
+- **`[handler_logdb]`** section removed from `logging.conf`.
+
 ### Changed
 
+- Version bumped to 1.0.0 — first stable release.
 - Log folder structure now uses zero-padded numeric months and days (`2026/03/02`) instead of named months (`2026/3.March/2`).
 
 ### Added
 
 - `version.yml` CI workflow — automatic version bumping (patch on push, minor on PR merge) with changelog stamping and GitHub releases.
+- Manual version change detection in `version.yml` — skips automatic bump when the version was already updated in the commit.
+- Development status classifier changed from *Beta* to *Production/Stable*.
 
 ## [0.3.0] - 2026-03-02
 

@@ -1,9 +1,8 @@
 """
-debug_tools.py
+logger_settings.py
 
-This module provides utilities for debugging and timing, including functions to check if debugging
-or timing is enabled
-and to log exceptions.
+This module provides utilities for setting up logging configuration, including functions to
+configure log paths, file handlers, and console output based on environment variables.
 """
 
 import atexit
@@ -15,13 +14,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-from .custom_handlers import LogDBHandler
 from .debug_tools import is_debug_on
-
-
-def is_database_logging_on() -> bool:
-    """Check if database logging is enabled via environment variable."""
-    return os.getenv("LOGGER_DATABASE", "False").lower() in ["true", "1", "t", "yes"]
 
 
 def is_logs_sorted_by_days() -> bool:
@@ -84,14 +77,13 @@ def logger_setup(script_name: str | None = None) -> None:
         script_name: Optional script identifier for log folder separation.
                      If provided and LOGGER_SCRIPT_FOLDERS=True, logs go to:
                          {LOGGER_PATH}/{script_name}/{year}/{month}/{day}/
-                     Also sets SCRIPT_NAME env var for LogDBHandler compatibility.
     """
     atexit.register(log_exit_code)
 
     # Loads up all the environment variables
     load_dotenv()
 
-    # Set SCRIPT_NAME env var if provided (for LogDBHandler and folder path)
+    # Set SCRIPT_NAME env var if provided (for folder path and log identification)
     if script_name:
         os.environ["SCRIPT_NAME"] = script_name
 
@@ -113,14 +105,12 @@ def logger_setup(script_name: str | None = None) -> None:
         raise e
 
     logger_file_path = f'{logger_path}/{today.strftime("%Y-%m-%dT%H%M%S")}.log'
-    logger_db_table = os.getenv("LOGGER_DB_TABLE", "python_transfer_data_log")
     if logger_conf_path.exists():
         try:
             logging.config.fileConfig(
                 logger_conf_path,
                 defaults={
                     "logfilename": logger_file_path,
-                    "table_name": logger_db_table,
                 },
             )
         except Exception as e:
@@ -131,9 +121,6 @@ def logger_setup(script_name: str | None = None) -> None:
             raise e
     else:
         logging.config.dictConfig(_default_logging_config(logger_file_path))
-        if is_database_logging_on():
-            log_db_handler = LogDBHandler(logger_db_table)
-            logging.getLogger("").addHandler(log_db_handler)
 
     logger = logging.getLogger(__name__)
     logger.info("Setting up logger for %s", os.getenv("SCRIPT_NAME", Path.cwd().name))

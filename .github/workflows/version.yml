@@ -23,7 +23,7 @@ jobs:
       cancel-in-progress: false
 
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version }}
+      new_version: ${{ steps.bump.outputs.new_version || steps.manual-check.outputs.new_version }}
       bump_type: ${{ steps.determine-bump.outputs.bump_type }}
       pr_body: ${{ steps.pr-info.outputs.pr_body }}
       pr_title: ${{ steps.pr-info.outputs.pr_title }}
@@ -43,17 +43,38 @@ jobs:
           git reset --hard origin/main
           echo "Synced to latest main: $(git rev-parse HEAD)"
 
+      - name: Check for manual version change
+        id: manual-check
+        run: |
+          # Compare the version field in pyproject.toml between this commit and its parent.
+          # If the version was already changed manually, skip the automatic bump.
+          CURRENT_VERSION=$(grep -oP '(?<=^version = ")[^"]+' pyproject.toml || echo "")
+          PARENT_VERSION=$(git show HEAD~1:pyproject.toml 2>/dev/null | grep -oP '(?<=^version = ")[^"]+' || echo "")
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Parent version:  $PARENT_VERSION"
+
+          if [ "$CURRENT_VERSION" != "$PARENT_VERSION" ] && [ -n "$PARENT_VERSION" ]; then
+            echo "Version was manually changed ($PARENT_VERSION -> $CURRENT_VERSION). Skipping automatic bump."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Python
+        if: steps.manual-check.outputs.skip != 'true'
         uses: actions/setup-python@v6.2.0
         with:
           python-version: '3.12'
 
       - name: Install toml package
+        if: steps.manual-check.outputs.skip != 'true'
         run: pip install toml
 
       - name: Capture PR information
         id: pr-info
-        if: github.event_name == 'pull_request'
+        if: steps.manual-check.outputs.skip != 'true' && github.event_name == 'pull_request'
         run: |
           # Save PR body to file (handles multiline)
           cat << 'PRBODYEOF' > pr_body.md
@@ -68,7 +89,7 @@ jobs:
           echo "pr_body_file=pr_body.md" >> $GITHUB_OUTPUT
 
       - name: Upload PR body as artifact
-        if: github.event_name == 'pull_request'
+        if: steps.manual-check.outputs.skip != 'true' && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v7.0.0
         with:
           name: pr-description
@@ -77,6 +98,7 @@ jobs:
 
       - name: Determine bump type
         id: determine-bump
+        if: steps.manual-check.outputs.skip != 'true'
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # PR merged = minor bump (Y)
@@ -90,6 +112,7 @@ jobs:
 
       - name: Bump version in pyproject.toml
         id: bump
+        if: steps.manual-check.outputs.skip != 'true'
         run: |
           python << 'EOF'
           import toml
@@ -127,7 +150,7 @@ jobs:
           EOF
 
       - name: Update CHANGELOG.md
-        if: github.event_name == 'pull_request'
+        if: steps.manual-check.outputs.skip != 'true' && github.event_name == 'pull_request'
         run: |
           python << 'EOF'
           import re
@@ -209,6 +232,7 @@ jobs:
           EOF
 
       - name: Commit version bump
+        if: steps.manual-check.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

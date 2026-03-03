@@ -9,11 +9,11 @@
 [![codecov](https://codecov.io/gh/bjorngun/developer-tools/graph/badge.svg?token=LZKYK9IK5K)](https://codecov.io/gh/bjorngun/developer-tools)
 [![License](https://img.shields.io/pypi/l/bosos-dev-tools)](LICENSE)
 
-Bosos Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes custom logging handlers, decorators for measuring execution time, a progress bar utility, a markdown link checker, and an AST-based code map generator.
+Bosos Dev Tools is a collection of utility tools for Python developers, designed to simplify debugging, logging, and monitoring tasks. This package includes decorators for measuring execution time, a progress bar utility, structured file logging, a markdown link checker, and an AST-based code map generator.
 
 ## Features
 
-- **Custom Logging Handlers**: Log messages to various destinations, including databases, with customizable formats.
+- **Custom Logging Handlers**: Log messages to various destinations with customizable formats.
 - **Timing Decorators**: Easily measure the execution time of your functions with minimal code changes.
 - **Progress Bar Utility**: Visualize the progress of long-running operations in the console.
 - **Debug Tools**: Check if debug or timing modes are enabled via environment variables.
@@ -29,22 +29,6 @@ pip install bosos-dev-tools
 ```
 
 ## Usage
-
-### Custom Logging Handler
-
-The `LogDBHandler` allows you to log messages directly to a database.
-
-``` py
-import logging
-from dev_tools.custom_handlers import LogDBHandler
-
-logger = logging.getLogger('test_logger')
-db_handler = LogDBHandler(db_table='test_table')
-logger.addHandler(db_handler)
-logger.setLevel(logging.INFO)
-
-logger.info('This is a test log message.')
-```
 
 ### Timing Decorator
 
@@ -111,9 +95,9 @@ The folder path is controlled by environment variables:
 | `LOGGER_PATH` | `./logs` | Base log directory |
 | `LOGGER_DAY_SPECIFIC` | `False` | Add a day subfolder (zero-padded) |
 | `LOGGER_SCRIPT_FOLDERS` | `False` | Add a script-name subfolder before the year |
-| `LOGGER_DATABASE` | `False` | Also log to a database via `LogDBHandler` |
 
 ### Markdown Link Checker
+| `LOGGER_DAY_SPECIFIC` | `False` | Add a day subfolder (zero-padded) |
 
 Scan markdown files for broken internal links. Available as a library or a CLI tool.
 
