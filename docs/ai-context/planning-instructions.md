@@ -1,7 +1,10 @@
 # Planning Instructions
 
 > **Priority: HIGH** — Read this before creating or following any multi-task plan.
-> Referenced by: `.github/copilot-instructions.md`, `AGENTS.md`, all agent files.
+> Referenced by: `.github/copilot-instructions.md` and agent files.
+>
+> This document is **project-independent**. All project-specific commands (test, lint, code map),
+> agent rosters, and file paths come from each project's `.github/copilot-instructions.md`.
 
 ---
 
@@ -55,7 +58,7 @@ Create a plan document (`.md` file) when **any** of these are true:
 docs/development-notes/{feature-name}-plan.md
 ```
 
-Examples: `offboarding-plan.md`, `test-suite-reorganization-plan.md`, `smtp-migration-plan.md`
+Examples: `cli-refactor-plan.md`, `test-suite-reorganization-plan.md`, `v2-migration-plan.md`
 
 ---
 
@@ -99,7 +102,7 @@ Examples: `offboarding-plan.md`, `test-suite-reorganization-plan.md`, `smtp-migr
 
 > **This is a separate step from per-task completion notes.** Task notes are written *during* execution for the benefit of the next task. The phase summary is written *after all tasks in the phase are done*, for the benefit of future agents who open the plan and need a quick overview without reading stale detail.
 
-1. **Run tests**: `pytest src/tests/ -v` (at minimum after every phase).
+1. **Run tests** using the project's test command (see `copilot-instructions.md`).
 2. **Write a phase summary** — This is a **mandatory, distinct deliverable**. Do not skip it, and do not confuse it with the per-task completion notes you already wrote.
 
    **What to do:** Replace the detailed task sections (What/Files/Acceptance criteria) for all completed tasks in the phase with a single, condensed phase-level summary block. Keep the task headings and their completion notes — remove the original planning detail that is now stale.
@@ -141,9 +144,9 @@ Everything else goes **below** the Task Index.
 | Phase | # | Task | Details | Agent | Cost | Complexity | Est. | Refs | Status |
 |-------|---|------|---------|-------|------|------------|------|------|--------|
 | **0 — Setup** | 0 | Create scaffolding | [Details](#task-0-create-scaffolding) | QA Engineer | 💚 | Simple | 10 min | | |
-| **1 — Core** | 1 | Implement feature X | [Details](#task-1-implement-feature-x) | Identity Agent | 💛 | Medium | 30 min | [ADR-004](../offboarding/01-architecture-decisions.md#adr-004) | |
-| | 2 | Add error handling | [Details](#task-2-add-error-handling) | Identity Agent | 💚 | Simple | 15 min | | |
-| **2 — Polish** | 3 | Write tests | [Details](#task-3-write-tests) | QA Engineer | 💛 | Medium | 25 min | [testing guide](../../reference/testing-guide.md) | |
+| **1 — Core** | 1 | Implement feature X | [Details](#task-1-implement-feature-x) | (per project) | 💛 | Medium | 30 min | | |
+| | 2 | Add error handling | [Details](#task-2-add-error-handling) | (per project) | 💚 | Simple | 15 min | | |
+| **2 — Polish** | 3 | Write tests | [Details](#task-3-write-tests) | QA Engineer | 💛 | Medium | 25 min | | |
 | **N — Cleanup** | N | Finalize & update docs | [Details](#task-n-finalize--update-docs) | Librarian | 💚 | Simple | 15 min | | |
 ```
 
@@ -236,19 +239,19 @@ The key elements:
 ```markdown
 ---
 
-## Phase 1 — md_link_checker
+## Phase 1 — Feature A
 
-### Task 1: Move md_link_checker into dev_tools
+### Task 1: Implement core logic
 ...
 
-### Task 2: Write tests for md_link_checker
+### Task 2: Write tests for feature A
 ...
 
 ---
 
-## Phase 2 — codemap_generator
+## Phase 2 — Feature B
 
-### Task 3: Refactor codemap_generator into sub-package
+### Task 3: Refactor into sub-package
 ...
 ```
 
@@ -278,12 +281,9 @@ Go through the entire plan and extract every informational gem — things learne
 | What You Learned | Where to Put It |
 |------------------|-----------------|
 | User-facing changes | `CHANGELOG.md` under `## [Unreleased]` ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format) |
-| New problem → file mapping | `docs/ai-context/search-strategy.md` |
-| Architecture decisions | `ARCHITECTURE.md` or `docs/development-notes/` |
-| Coding patterns/conventions | `docs/ai-context/coding-standards.md` |
-| Domain knowledge | `docs/ai-context/domain-knowledge.md` |
-| Error handling patterns | `docs/ai-context/error-handling.md` |
-| Agent workflow learnings | Relevant `.github/agents/*.agent.md` |
+| Architecture decisions | Project architecture docs or `docs/development-notes/` |
+| Coding patterns/conventions | Project coding standards doc |
+| Agent workflow learnings | Relevant agent configuration files |
 
 #### Changelog Entry
 
@@ -301,15 +301,12 @@ Write the entry from a **user/reviewer perspective** (what changed and why), not
 ### Part 2: Tidy Up for PR
 
 - [ ] All Task Index items are `✅ Done`
-- [ ] Tests pass: `pytest src/tests/ -v`
-- [ ] Lint passes: `pylint src/dw_to_ad`
-- [ ] Code map regenerated if structure changed: `python scripts/build/codemap_generator.py`
-- [ ] Search strategy updated if new modules/features added
-- [ ] Markdown links valid: run "Check markdown links" VS Code task
+- [ ] Tests pass (use project's test command from `copilot-instructions.md`)
+- [ ] Lint passes (use project's lint command from `copilot-instructions.md`)
+- [ ] Code map / docs regenerated if structure changed
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]` (compiled from phase changelog notes)
-- [ ] Documentation updated (Librarian rule)
+- [ ] Documentation updated
 - [ ] **Delete the plan file** — it has served its purpose; the knowledge is now in the right docs
-- [ ] **Markdown links valid** — run "Check markdown links" VS Code task **after** deleting the plan file (deletion creates orphaned references)
 - [ ] Final commit:
   ```bash
   git add -A
@@ -332,20 +329,19 @@ Use the lowest cost model that can handle the task well. Over-specifying wastes 
 
 ## Agent Assignment Guidelines
 
+The agent assignment table is **project-specific**. Refer to your project's `.github/copilot-instructions.md` or agent configuration files for the list of available agents and their domains.
+
+General pattern:
+
 | Task Type | Recommended Agent | Mode |
 |-----------|-------------------|------|
-| Jira/Email/PDF notifications | Integration Agent | 💬 |
-| Workflow logic, state machine | Provisioning Orchestrator | 💬 |
-| Sync filtering, attribute mapping, OU sync | Sync Orchestrator | 💬 |
-| Offboarding/leaver workflow | Offboarding Orchestrator | 💬 |
-| AD/Exchange operations | Identity Agent | 💬 |
-| Microsoft Graph API / Entra ID | Entra Agent | 💬 |
-| SQL queries, data mapping | Data Steward | 💬 |
 | Test writing, coverage | QA Engineer | 💬 |
 | Linting, cleanup, formatting | Janitor | 🔄 |
 | Documentation updates | Librarian | 🔄 |
-| Security audits | Security Sentinel | 🔄 |
 | External research, sourced docs | Research Agent | 🔄 |
+| Feature implementation | (project-specific agents) | 💬 |
+
+Mode key: 💬 = interactive/chat, 🔄 = autonomous/batch
 
 ---
 
@@ -355,8 +351,8 @@ Before marking any task `✅ Done`, verify:
 
 - [ ] Assumptions stated explicitly
 - [ ] Files touched are listed in the completion note
-- [ ] Tests pass (`pytest src/tests/ -v`)
-- [ ] Lint is clean (`pylint src/dw_to_ad`)
+- [ ] Tests pass (use project's test command)
+- [ ] Lint is clean (use project's lint command)
 - [ ] Documentation updated if needed (Librarian rule)
 - [ ] Code map regenerated if structure changed
 - [ ] Risk notes provided for breaking changes
