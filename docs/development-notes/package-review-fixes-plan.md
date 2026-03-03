@@ -17,10 +17,10 @@
 | | 1 | Add `__version__` to `__init__.py` | [Details](#task-1-add-__version__-to-__init__py) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
 | | 2 | Add `Homepage` URL to `pyproject.toml` | [Details](#task-2-add-homepage-url-to-pyprojecttoml) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
 | | 2g | ⏩ Phase 0 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
-| **1 — Code Quality** | 3 | Guard `timing_decorator` print | [Details](#task-3-guard-timing_decorator-print) | Copilot | 💚 | Simple | 10 min | | |
-| | 4 | Fix `progress_bar` type hint | [Details](#task-4-fix-progress_bar-type-hint) | Copilot | 💚 | Simple | 10 min | | |
-| | 5 | Fix README duplicate line | [Details](#task-5-fix-readme-duplicate-line) | Librarian | 💚 | Simple | 5 min | | |
-| | 5g | ⏩ Phase 1 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Copilot | 💚 | Simple | 5 min | | |
+| **1 — Code Quality** | 3 | Guard `timing_decorator` print | [Details](#task-3-guard-timing_decorator-print) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
+| | 4 | Fix `progress_bar` type hint | [Details](#task-4-fix-progress_bar-type-hint) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
+| | 5 | Fix README duplicate line | [Details](#task-5-fix-readme-duplicate-line) | Librarian | 💚 | Simple | 5 min | | ✅ Done |
+| | 5g | ⏩ Phase 1 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Copilot | 💚 | Simple | 5 min | | ✅ Done |
 | **2 — Test Coverage** | 6 | Add `__main__.py` subprocess tests | [Details](#task-6-add-__main__py-subprocess-tests) | QA Engineer | 💛 | Medium | 25 min | | |
 | | 7 | Improve `logger_settings.py` coverage | [Details](#task-7-improve-logger_settingspy-coverage) | QA Engineer | 💛 | Medium | 20 min | | |
 | | 7g | ⏩ Phase 2 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
@@ -55,73 +55,26 @@
 
 ---
 
-## Phase 1 — Code Quality
+## Phase 1 — Code Quality (Summary)
 
-### Task 3: Guard `timing_decorator` print
+**Completed:** 2026-03-03 · Commit `ddc37a5`
 
-**What:** The `timing_decorator` currently unconditionally calls `print()` with the elapsed time on every decorated function invocation. This is a side-effect that can surprise library consumers who just want timing when explicitly opted in. Change the `print()` call to only execute when `is_timing_on()` returns `True`.
+| Task | What was done |
+|------|---------------|
+| **Task 3** — Guard `timing_decorator` print | Wrapped both `print()` and `logger.info()` inside `if is_timing_on()` so no output is produced unless `TIMING=True`. Updated docstring. Rewrote tests to cover timing-off (no print), timing-on (prints), and logger-available (logs) scenarios. |
+| **Task 4** — Fix `progress_bar` type hint | Changed `iterable` parameter type from `Iterable` to `Collection` (from `collections.abc`). `Collection` is `Sized + Iterable + Container`, correctly reflecting the `len()` call. Updated docstring. |
+| **Task 5** — Fix README duplicate line | Removed stray `LOGGER_DAY_SPECIFIC` table row that appeared under the `### Markdown Link Checker` heading outside any table context. |
 
-**Why:** Library code should not produce console output by default. Users who need timing output opt in via `TIMING=True`.
+**Decisions:** Used `collections.abc.Collection` rather than a custom protocol — simpler and sufficient since `Collection = Sized + Iterable + Container`.
 
-**Files:**
-- Modify: `src/dev_tools/custom_decorators.py`
-- Modify: `src/tests/test_custom_decorators.py` (update tests to match new behavior)
+**Issues:** None.
 
-**Acceptance criteria:**
-- When `TIMING` env var is unset/false, `timing_decorator` does NOT print anything.
-- When `TIMING=True`, elapsed time is printed (and logged if applicable).
-- All existing tests pass (updated as needed).
-- Pylint 10/10.
+**Notes for future phases:** Task 3 is a **breaking behavioral change** — `timing_decorator` no longer prints by default. Document in changelog.
 
-**Risks:** This is a **breaking behavioral change** for anyone relying on the unconditional print. Acceptable for a utility library where the print was arguably a bug.
-
----
-
-### Task 4: Fix `progress_bar` type hint
-
-**What:** The `progress_bar` function's `iterable` parameter is typed as `Iterable` but immediately calls `len(iterable)`, which requires `Sized`. The type hint should reflect what the function actually needs. Use `typing.Sized` in combination or a `Collection` type, or a protocol.
-
-**Files:**
-- Modify: `src/dev_tools/progress_bar.py`
-
-**Acceptance criteria:**
-- Type hint accurately reflects that `iterable` must support `len()`.
-- Pylint 10/10 and all tests pass.
-- A type checker would flag `progress_bar(iter([1,2,3]))` as an error.
-
----
-
-### Task 5: Fix README duplicate line
-
-**What:** In `README.md` around line 100, a stray `| \`LOGGER_DAY_SPECIFIC\` | \`False\` | Add a day subfolder (zero-padded) |` table row appears directly below the `### Markdown Link Checker` heading, outside any table context. Remove it.
-
-**Files:**
-- Modify: `README.md`
-
-**Acceptance criteria:**
-- The duplicate `LOGGER_DAY_SPECIFIC` line is removed.
-- The Markdown Link Checker section reads cleanly.
-- `md-link-checker` passes on the repo.
-
----
-
-### ⏩ Phase 1 Summary (Task 5g)
-
-> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
-
-**Steps:**
-
-1. **Run tests** — `pytest src/tests/ -v` (all must pass).
-2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
-3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
-   - What was done (per task, 1–2 lines each)
-   - Key decisions made
-   - Issues encountered
-   - Notes for future phases
-   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
-   - Keep task headings and completion notes — remove original planning detail.
-4. **Mark this task `✅ Done`** in the Task Index.
-5. **Commit separately** — `git commit -m "docs: Phase 1 summary"`
+**Changelog notes:**
+- **Changed** — `timing_decorator` no longer prints elapsed time by default; requires `TIMING=True` env var.
+- **Fixed** — `progress_bar` type hint changed from `Iterable` to `Collection` to accurately reflect `len()` requirement.
+- **Fixed** — Removed duplicate `LOGGER_DAY_SPECIFIC` table row from README.
 
 ---
 
