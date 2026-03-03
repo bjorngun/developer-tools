@@ -72,12 +72,25 @@
 - `[project.urls]` contains `Homepage = "https://github.com/bjorngun/developer-tools"`.
 - Package still builds and installs.
 
-> 🛑 **Phase complete? Do these 3 steps NOW (gate task `2g`):**
-> 1. **Run tests** — `pytest src/tests/ -v`
-> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
-> 3. **Commit separately** — `git commit -m "docs: Phase 0 summary"`
->
-> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
+---
+
+### ⏩ Phase 0 Summary (Task 2g)
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase 0 summary"`
 
 ---
 
@@ -129,12 +142,25 @@
 - The Markdown Link Checker section reads cleanly.
 - `md-link-checker` passes on the repo.
 
-> 🛑 **Phase complete? Do these 3 steps NOW (gate task `5g`):**
-> 1. **Run tests** — `pytest src/tests/ -v`
-> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
-> 3. **Commit separately** — `git commit -m "docs: Phase 1 summary"`
->
-> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
+---
+
+### ⏩ Phase 1 Summary (Task 5g)
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase 1 summary"`
 
 ---
 
@@ -169,12 +195,25 @@
 
 **Notes:** Use `unittest.mock.patch` to simulate OSError on `Path.mkdir`, missing config files, etc. Be careful with `atexit` registration — may need cleanup in tests.
 
-> 🛑 **Phase complete? Do these 3 steps NOW (gate task `7g`):**
-> 1. **Run tests** — `pytest src/tests/ -v`
-> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
-> 3. **Commit separately** — `git commit -m "docs: Phase 2 summary"`
->
-> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
+---
+
+### ⏩ Phase 2 Summary (Task 7g)
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase 2 summary"`
 
 ---
 
@@ -230,12 +269,25 @@
 - README contains a clear explanation under the logging section about config file discovery.
 - `md-link-checker` passes on the repo.
 
-> 🛑 **Phase complete? Do these 3 steps NOW (gate task `10g`):**
-> 1. **Run tests** — `pytest src/tests/ -v`
-> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
-> 3. **Commit separately** — `git commit -m "docs: Phase 3 summary"`
->
-> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
+---
+
+### ⏩ Phase 3 Summary (Task 10g)
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase 3 summary"`
 
 ---
 
