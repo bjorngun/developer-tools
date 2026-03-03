@@ -7,7 +7,7 @@ debugging and timing estimations.
 
 import logging
 import time
-from collections.abc import Iterable
+from collections.abc import Collection
 from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
 
 
@@ -41,16 +41,16 @@ def _get_estimation_time_remaining(
     return f" |--{et_str} - {eta_str}--|"
 
 def progress_bar(
-    iterable: Iterable,
+    iterable: Collection,
     decimals: int = 1,
     length: int = 50,
     **kwargs: dict,
-) -> Iterable:
+) -> Collection:
     """
-    Displays a terminal progress bar for an iterable.
+    Displays a terminal progress bar for a sized collection.
 
     Args:
-        iterable (Iterable): Required. Iterable object to track progress.
+        iterable (Collection): Required. A sized, iterable collection to track progress.
         decimals (int): Optional. Number of decimals in percent complete. Default is 1.
         length (int): Optional. Character length of the progress bar. Default is 50.
         **kwargs (dict): Additional optional arguments:

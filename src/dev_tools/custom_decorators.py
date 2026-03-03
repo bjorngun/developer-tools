@@ -14,7 +14,11 @@ from dev_tools.debug_tools import is_timing_on
 
 def timing_decorator(func: Callable) -> Callable:
     """
-    Decorator that prints and optionally logs the elapsed time of the wrapped function.
+    Decorator that measures execution time of the wrapped function.
+
+    When the ``TIMING`` environment variable is enabled (via ``is_timing_on()``),
+    prints the elapsed time and optionally logs it if the first positional
+    argument has a ``logger`` attribute.
 
     Args:
         func (Callable): The function to be decorated.
@@ -30,13 +34,14 @@ def timing_decorator(func: Callable) -> Callable:
         end_time = time.time()
         elapsed_time = end_time - start_time
 
-        # Print elapsed time
-        print(f"Elapsed time for {func.__name__}: {elapsed_time:.2f} seconds")
+        # Only output timing information when timing is explicitly enabled
+        if is_timing_on():
+            print(f"Elapsed time for {func.__name__}: {elapsed_time:.2f} seconds")
 
-        # Check if timing is enabled and log if applicable
-        if is_timing_on() and args and hasattr(args[0], "logger"):
-            logger = getattr(args[0], "logger")
-            logger.info(f"Elapsed time for {func.__name__}: {elapsed_time:.2f} seconds")
+            # Log if the first argument has a logger attribute
+            if args and hasattr(args[0], "logger"):
+                logger = getattr(args[0], "logger")
+                logger.info(f"Elapsed time for {func.__name__}: {elapsed_time:.2f} seconds")
 
         return result
 

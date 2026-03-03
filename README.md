@@ -97,7 +97,6 @@ The folder path is controlled by environment variables:
 | `LOGGER_SCRIPT_FOLDERS` | `False` | Add a script-name subfolder before the year |
 
 ### Markdown Link Checker
-| `LOGGER_DAY_SPECIFIC` | `False` | Add a day subfolder (zero-padded) |
 
 Scan markdown files for broken internal links. Available as a library or a CLI tool.
 
