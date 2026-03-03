@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Log folder structure now uses zero-padded numeric months and days (`2026/03/02`) instead of named months (`2026/3.March/2`).
+
+### Added
+
+- `version.yml` CI workflow — automatic version bumping (patch on push, minor on PR merge) with changelog stamping and GitHub releases.
+
 ## [0.3.0] - 2026-03-02
 
 ### Added

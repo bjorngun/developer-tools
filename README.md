@@ -93,6 +93,25 @@ if __name__ == '__main__':
     main()
 ```
 
+Log files are written to a structured folder hierarchy:
+
+```
+logs/
+  2026/
+    03/
+      02/
+        2026-03-02T062351.log
+```
+
+The folder path is controlled by environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `LOGGER_PATH` | `./logs` | Base log directory |
+| `LOGGER_DAY_SPECIFIC` | `False` | Add a day subfolder (zero-padded) |
+| `LOGGER_SCRIPT_FOLDERS` | `False` | Add a script-name subfolder before the year |
+| `LOGGER_DATABASE` | `False` | Also log to a database via `LogDBHandler` |
+
 ### Markdown Link Checker
 
 Scan markdown files for broken internal links. Available as a library or a CLI tool.
