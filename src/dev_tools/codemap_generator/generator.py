@@ -36,7 +36,7 @@ from typing import Optional
 
 
 @dataclass
-class SymbolInfo:
+class SymbolInfo:  # pylint: disable=too-many-instance-attributes
     """Information about a code symbol (class, function, method)."""
 
     name: str
@@ -226,7 +226,7 @@ class CodeMapGenerator:
         """Extract parameter names from a function."""
         params = []
         for arg in node.args.args:
-            if arg.arg != "self" and arg.arg != "cls":
+            if arg.arg not in ("self", "cls"):
                 params.append(arg.arg)
         return params
 
@@ -234,12 +234,12 @@ class CodeMapGenerator:
         """Get the name of a decorator."""
         if isinstance(decorator, ast.Name):
             return decorator.id
-        elif isinstance(decorator, ast.Attribute):
-            return f"{self._get_full_attr(decorator)}"
-        elif isinstance(decorator, ast.Call):
+        if isinstance(decorator, ast.Attribute):
+            return self._get_full_attr(decorator)
+        if isinstance(decorator, ast.Call):
             if isinstance(decorator.func, ast.Name):
                 return decorator.func.id
-            elif isinstance(decorator.func, ast.Attribute):
+            if isinstance(decorator.func, ast.Attribute):
                 return self._get_full_attr(decorator.func)
         return "unknown"
 
@@ -307,11 +307,14 @@ class CodeMapGenerator:
                         return True
         return False
 
-    def _detect_cli_patterns(self, tree: ast.Module, file_path: str) -> None:
+    def _detect_cli_patterns(self, _tree: ast.Module, file_path: str) -> None:
         """Detect CLI patterns like argparse, click, typer."""
         source_lower = ""
         try:
-            source_lower = Path(self.src_root.parent / file_path).read_text().lower()
+            full_path = Path(self.src_root.parent / file_path)
+            source_lower = full_path.read_text(
+                encoding="utf-8"
+            ).lower()
         except (FileNotFoundError, UnicodeDecodeError):
             return
 
@@ -366,41 +369,46 @@ class CodeMapGenerator:
                         description=f"{script_name} -> {script_target}",
                     )
                 )
-        except Exception:  # noqa: BLE001 — best-effort, never crash
+        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
             pass
 
     def _extract_calls(self, tree: ast.Module, file_path: str) -> None:
         """Extract function/method calls (approximate call graph)."""
+        calls_list = self.calls
 
         class CallVisitor(ast.NodeVisitor):
             """AST visitor that tracks call relationships between functions."""
 
-            def __init__(visitor_self) -> None:
-                visitor_self.current_scope: list[str] = []
+            def __init__(self) -> None:
+                self.current_scope: list[str] = []
 
-            def visit_FunctionDef(
-                visitor_self, node: ast.FunctionDef
+            def visit_FunctionDef(  # pylint: disable=invalid-name
+                self, node: ast.FunctionDef
             ) -> None:
-                visitor_self.current_scope.append(node.name)
-                visitor_self.generic_visit(node)
-                visitor_self.current_scope.pop()
+                """Visit a function definition node."""
+                self.current_scope.append(node.name)
+                self.generic_visit(node)
+                self.current_scope.pop()
 
-            def visit_AsyncFunctionDef(
-                visitor_self, node: ast.AsyncFunctionDef
+            def visit_AsyncFunctionDef(  # pylint: disable=invalid-name
+                self, node: ast.AsyncFunctionDef
             ) -> None:
-                visitor_self.current_scope.append(node.name)
-                visitor_self.generic_visit(node)
-                visitor_self.current_scope.pop()
+                """Visit an async function definition node."""
+                self.current_scope.append(node.name)
+                self.generic_visit(node)
+                self.current_scope.pop()
 
-            def visit_ClassDef(visitor_self, node: ast.ClassDef) -> None:
-                visitor_self.current_scope.append(node.name)
-                visitor_self.generic_visit(node)
-                visitor_self.current_scope.pop()
+            def visit_ClassDef(self, node: ast.ClassDef) -> None:  # pylint: disable=invalid-name
+                """Visit a class definition node."""
+                self.current_scope.append(node.name)
+                self.generic_visit(node)
+                self.current_scope.pop()
 
-            def visit_Call(visitor_self, node: ast.Call) -> None:
-                if visitor_self.current_scope:
-                    caller = ".".join(visitor_self.current_scope)
-                    callee = visitor_self._get_callee_name(node)
+            def visit_Call(self, node: ast.Call) -> None:  # pylint: disable=invalid-name
+                """Visit a call expression node."""
+                if self.current_scope:
+                    caller = ".".join(self.current_scope)
+                    callee = self._get_callee_name(node)
                     if callee and not callee.startswith(
                         (
                             "print",
@@ -413,7 +421,7 @@ class CodeMapGenerator:
                             "tuple",
                         )
                     ):
-                        self.calls.append(
+                        calls_list.append(
                             CallInfo(
                                 caller=caller,
                                 callee=callee,
@@ -421,14 +429,15 @@ class CodeMapGenerator:
                                 line_number=node.lineno,
                             )
                         )
-                visitor_self.generic_visit(node)
+                self.generic_visit(node)
 
             def _get_callee_name(
-                visitor_self, node: ast.Call
+                self, node: ast.Call
             ) -> Optional[str]:
+                """Get the name of the function being called."""
                 if isinstance(node.func, ast.Name):
                     return node.func.id
-                elif isinstance(node.func, ast.Attribute):
+                if isinstance(node.func, ast.Attribute):
                     return node.func.attr
                 return None
 
@@ -450,7 +459,8 @@ class CodeMapGenerator:
         lines = [
             "# Symbol Index",
             "",
-            f"> Auto-generated by `codemap_generator` on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            (f"> Auto-generated by `codemap_generator`"
+             f" on {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
             "> **Do not edit manually** — regenerate with `codemap-generator`",
             "",
             "## Classes",
@@ -490,7 +500,9 @@ class CodeMapGenerator:
             doc = (func.docstring or "").split("\n")[0][:60] if func.docstring else "-"
             func_type = "async " if "async" in func.symbol_type else ""
             lines.append(
-                f"| `{func_type}{func.name}` | [{func.file_path}]({func.file_path}#L{func.line_number})"
+                f"| `{func_type}{func.name}` "
+                f"| [{func.file_path}]({func.file_path}"
+                f"#L{func.line_number})"
                 f" | {func.line_number} | {doc} |"
             )
 
@@ -532,12 +544,13 @@ class CodeMapGenerator:
 
         return "\n".join(lines)
 
-    def generate_dependency_graph(self) -> str:
+    def generate_dependency_graph(self) -> str:  # pylint: disable=too-many-locals
         """Generate the dependency graph markdown."""
         lines = [
             "# Dependency Graph",
             "",
-            f"> Auto-generated by `codemap_generator` on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            (f"> Auto-generated by `codemap_generator`"
+             f" on {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
             "> **Do not edit manually** — regenerate with `codemap-generator`",
             "",
             "## Internal Dependencies",
@@ -613,7 +626,8 @@ class CodeMapGenerator:
         lines = [
             "# Entry Points",
             "",
-            f"> Auto-generated by `codemap_generator` on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            (f"> Auto-generated by `codemap_generator`"
+             f" on {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
             "> **Do not edit manually** — regenerate with `codemap-generator`",
             "",
             "## CLI Scripts",
@@ -646,12 +660,13 @@ class CodeMapGenerator:
 
         return "\n".join(lines)
 
-    def generate_module_summaries(self) -> str:
+    def generate_module_summaries(self) -> str:  # pylint: disable=too-many-locals
         """Generate module summaries from docstrings."""
         lines = [
             "# Module Summaries",
             "",
-            f"> Auto-generated by `codemap_generator` on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            (f"> Auto-generated by `codemap_generator`"
+             f" on {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
             "> **Do not edit manually** — regenerate with `codemap-generator`",
             "",
             "## Package Structure",
@@ -738,7 +753,8 @@ class CodeMapGenerator:
         lines = [
             "# Call Graph (Approximate)",
             "",
-            f"> Auto-generated by `codemap_generator` on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            (f"> Auto-generated by `codemap_generator`"
+             f" on {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
             "> **Do not edit manually** — regenerate with `codemap-generator`",
             "",
             "Warning: This is a static analysis approximation."
@@ -792,7 +808,8 @@ class CodeMapGenerator:
         lines = [
             f"# Code Map — {self.package_name}",
             "",
-            f"> Auto-generated by `codemap_generator` on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            (f"> Auto-generated by `codemap_generator`"
+             f" on {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
             "> **Do not edit manually** — regenerate with `codemap-generator`",
             "",
             "This document provides a machine-generated overview of the codebase structure.",
@@ -942,7 +959,7 @@ Output files:
 
     args = parser.parse_args()
 
-    print(f"Code Map Generator")
+    print("Code Map Generator")
     print(f"   Source: {args.src_root}/{args.package}")
     print(f"   Output: {args.output_dir}")
     print()

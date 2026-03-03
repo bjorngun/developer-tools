@@ -110,18 +110,22 @@ class ScanResult:
 
     @property
     def links_checked(self) -> int:
+        """Total number of links checked."""
         return len(self.results)
 
     @property
     def links_ok(self) -> int:
+        """Number of links with OK status."""
         return sum(1 for r in self.results if r.status == LinkStatus.OK)
 
     @property
     def links_broken(self) -> int:
+        """Number of links with BROKEN status."""
         return sum(1 for r in self.results if r.status == LinkStatus.BROKEN)
 
     @property
     def links_skipped(self) -> int:
+        """Number of links with SKIPPED status."""
         return sum(1 for r in self.results if r.status == LinkStatus.SKIPPED)
 
 
@@ -300,7 +304,7 @@ def resolve_link_target(
 # Single-link checking
 # ---------------------------------------------------------------------------
 
-def check_link(
+def check_link(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     source_file: Path,
     line_number: int,
     link_text: str,
@@ -316,16 +320,25 @@ def check_link(
 
     # Skip external links
     if target.startswith(("http://", "https://", "mailto:")):
-        return LinkResult(rel_source, line_number, link_text, target, LinkStatus.SKIPPED, "external")
+        return LinkResult(
+            rel_source, line_number, link_text, target,
+            LinkStatus.SKIPPED, "external",
+        )
 
     # Skip template placeholders
     if _is_template_placeholder(target):
-        return LinkResult(rel_source, line_number, link_text, target, LinkStatus.SKIPPED, "template placeholder")
+        return LinkResult(
+            rel_source, line_number, link_text, target,
+            LinkStatus.SKIPPED, "template placeholder",
+        )
 
     resolved_path, anchor = resolve_link_target(source_file, target, root, is_root_relative)
 
     if not resolved_path.exists():
-        return LinkResult(rel_source, line_number, link_text, target, LinkStatus.BROKEN, "file not found")
+        return LinkResult(
+            rel_source, line_number, link_text, target,
+            LinkStatus.BROKEN, "file not found",
+        )
 
     # Check anchor if specified (unless skip_anchors)
     if anchor and not skip_anchors and resolved_path.suffix.lower() == ".md":
@@ -344,7 +357,7 @@ def check_link(
 # File scanning
 # ---------------------------------------------------------------------------
 
-def scan_file(
+def scan_file(  # pylint: disable=too-many-locals
     md_file: Path,
     root: Path,
     anchor_cache: dict[Path, set[str]],
