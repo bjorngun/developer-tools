@@ -25,7 +25,7 @@
 | | 7 | Improve `logger_settings.py` coverage | [Details](#task-7-improve-logger_settingspy-coverage) | QA Engineer | 💛 | Medium | 20 min | | ✅ Done |
 | | 7g | ⏩ Phase 2 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | ✅ Done |
 | **3 — CI & Documentation** | 8 | Separate publish workflow | [Details](#task-8-separate-publish-workflow) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
-| | 9 | Expand CI OS test matrix | [Details](#task-9-expand-ci-os-test-matrix) | Copilot | 💚 | Simple | 10 min | | |
+| | 9 | Expand CI OS test matrix | [Details](#task-9-expand-ci-os-test-matrix) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 10 | Document `logging.conf` usage | [Details](#task-10-document-loggingconf-usage) | Librarian | 💚 | Simple | 15 min | | |
 | | 10g | ⏩ Phase 3 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Librarian | 💚 | Simple | 5 min | | |
 | **4 — Cleanup** | 11 | Finalize, update docs, delete plan | [Details](#task-11-finalize-update-docs-delete-plan) | Librarian | 💚 | Simple | 15 min | | |
@@ -134,6 +134,12 @@
 - Matrix includes `windows-latest` and `ubuntu-latest` for all Python versions (3.10–3.14).
 - Optionally `macos-latest` with Python 3.12.
 - Workflow YAML is valid (can be validated with `actionlint` or a dry-run push).
+
+**Completion note (2026-03-03):**
+- Changed `os` matrix from `[windows-latest]` to `[windows-latest, ubuntu-latest]` so all 5 Python versions run on both OSes.
+- Added `macos-latest` with Python 3.12 via `include`.
+- Total test matrix: 11 jobs (5 Windows + 5 Ubuntu + 1 macOS).
+- **Changelog:** Changed — CI test matrix expanded to run all Python versions on both Windows and Ubuntu, plus macOS 3.12.
 
 ---
 
