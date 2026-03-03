@@ -7,8 +7,11 @@ debugging and timing estimations.
 
 import logging
 import time
-from collections.abc import Collection
+from collections.abc import Collection, Iterator
+from typing import TypeVar
 from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
+
+T = TypeVar("T")
 
 
 def _get_estimation_time_remaining(
@@ -41,11 +44,11 @@ def _get_estimation_time_remaining(
     return f" |--{et_str} - {eta_str}--|"
 
 def progress_bar(
-    iterable: Collection,
+    iterable: Collection[T],
     decimals: int = 1,
     length: int = 50,
     **kwargs: dict,
-) -> Collection:
+) -> Iterator[T]:
     """
     Displays a terminal progress bar for a sized collection.
 
