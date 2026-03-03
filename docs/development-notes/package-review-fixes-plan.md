@@ -27,7 +27,7 @@
 | **3 — CI & Documentation** | 8 | Separate publish workflow | [Details](#task-8-separate-publish-workflow) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 9 | Expand CI OS test matrix | [Details](#task-9-expand-ci-os-test-matrix) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 10 | Document `logging.conf` usage | [Details](#task-10-document-loggingconf-usage) | Librarian | 💚 | Simple | 15 min | | ✅ Done |
-| | 10g | ⏩ Phase 3 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Librarian | 💚 | Simple | 5 min | | |
+| | 10g | ⏩ Phase 3 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Librarian | 💚 | Simple | 5 min | | ✅ Done |
 | **4 — Cleanup** | 11 | Finalize, update docs, delete plan | [Details](#task-11-finalize-update-docs-delete-plan) | Librarian | 💚 | Simple | 15 min | | |
 
 ---
@@ -99,88 +99,27 @@
 
 ---
 
-## Phase 3 — CI & Documentation
+## Phase 3 — CI & Documentation (Summary)
 
-### Task 8: Separate publish workflow
+**Completed:** 2026-03-03 · 199 tests pass · pylint 10/10
 
-**What:** Extract the `publish` job from `version.yml` into a standalone `publish.yml` triggered by `release: [published]`. This fixes a bug where PR merges created GitHub Releases but never published to PyPI (the publish job's condition excluded PR events). It also decouples publishing from versioning — publish can be re-run independently, and direct pushes no longer auto-publish.
+| Task | What was done |
+|------|---------------|
+| **Task 8** — Separate publish workflow | Created `.github/workflows/publish.yml` triggered by `release: [published]`. Removed `publish` job from `version.yml`. PR merges now correctly publish via: version-bump → tag → Release → publish.yml → PyPI. |
+| **Task 9** — Expand CI OS test matrix | Changed `os` matrix from `[windows-latest]` to `[windows-latest, ubuntu-latest]` for all 5 Python versions. Added `macos-latest` with Python 3.12 via `include`. Total: 11 test jobs. |
+| **Task 10** — Document `logging.conf` usage | Added "Logging Configuration File" subsection to README explaining config file discovery (`logging.conf`/`logging_dev.conf`), fallback to built-in default, and `LOGGER_CONF_PATH`/`LOGGER_CONF_DEV_PATH`/`DEBUG` env vars. |
 
-**Files:**
-- Create: `.github/workflows/publish.yml`
-- Modify: `.github/workflows/version.yml` (remove `publish` job)
+**Decisions:** Used `include` for the single macOS entry rather than adding it to the main matrix (keeps the matrix clean). Documented logging config inline in README rather than a separate doc page (matches project style).
 
-**Acceptance criteria:**
-- `publish.yml` triggers on `release: [published]` and checks out the release tag.
-- `version.yml` no longer contains a `publish` job.
-- Chain: PR merge → version-bump → tag → GitHub Release → `publish.yml` → PyPI.
+**Issues:** The plan file has 8 broken anchor links from Phase 0–2 task index entries pointing to headings that were condensed into summaries. These are expected and will be resolved when the plan file is deleted in Phase 4.
 
-**Completion note (2026-03-03):**
-- Created `.github/workflows/publish.yml` triggered by `release: [published]`, checks out the tag.
-- Removed the `publish` job from `version.yml`.
-- PR merges now correctly publish via: version-bump → tag → Release → publish.yml → PyPI.
-- Direct pushes do patch bumps but no longer auto-publish (create a Release manually if needed).
-- **Changelog:** Fixed — PR merges now publish to PyPI via release-triggered workflow. Changed — publish job extracted to separate `publish.yml`.
+**Notes for future phases:** None.
 
----
-
-### Task 9: Expand CI OS test matrix
-
-**What:** The test workflow currently runs on `windows-latest` for all 5 Python versions but only includes one `ubuntu-latest` entry (Python 3.12). Expand the matrix so all Python versions are tested on both Windows and Ubuntu. Optionally add `macos-latest` for a single Python version.
-
-**Files:**
-- Modify: `.github/workflows/test.yml`
-
-**Acceptance criteria:**
-- Matrix includes `windows-latest` and `ubuntu-latest` for all Python versions (3.10–3.14).
-- Optionally `macos-latest` with Python 3.12.
-- Workflow YAML is valid (can be validated with `actionlint` or a dry-run push).
-
-**Completion note (2026-03-03):**
-- Changed `os` matrix from `[windows-latest]` to `[windows-latest, ubuntu-latest]` so all 5 Python versions run on both OSes.
-- Added `macos-latest` with Python 3.12 via `include`.
-- Total test matrix: 11 jobs (5 Windows + 5 Ubuntu + 1 macOS).
-- **Changelog:** Changed — CI test matrix expanded to run all Python versions on both Windows and Ubuntu, plus macOS 3.12.
-
----
-
-### Task 10: Document `logging.conf` usage
-
-**What:** The README shows `logger_setup()` but doesn't explain that it looks for `logging.conf` / `logging_dev.conf` at the CWD (or paths specified by `LOGGER_CONF_PATH` / `LOGGER_CONF_DEV_PATH`). Users who install via pip won't have these files and may not understand the fallback behavior. Add a brief section explaining:
-1. Where `logger_setup` looks for config files.
-2. That a sensible default dict config is used when no `.conf` file is found.
-3. How to override with `LOGGER_CONF_PATH`.
-
-**Files:**
-- Modify: `README.md`
-
-**Acceptance criteria:**
-- README contains a clear explanation under the logging section about config file discovery.
-- `md-link-checker` passes on the repo.
-
-**Completion note (2026-03-03):**
-- Added "Logging Configuration File" subsection to README under the logging usage section.
-- Documents config file discovery order (`logging.conf` / `logging_dev.conf`), fallback to built-in default, and `LOGGER_CONF_PATH` / `LOGGER_CONF_DEV_PATH` / `DEBUG` env vars.
-- **Changelog:** Added — README documentation for logging configuration file discovery and fallback behavior.
-
----
-
-### ⏩ Phase 3 Summary (Task 10g)
-
-> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
-
-**Steps:**
-
-1. **Run tests** — `pytest src/tests/ -v` (all must pass).
-2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
-3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
-   - What was done (per task, 1–2 lines each)
-   - Key decisions made
-   - Issues encountered
-   - Notes for future phases
-   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
-   - Keep task headings and completion notes — remove original planning detail.
-4. **Mark this task `✅ Done`** in the Task Index.
-5. **Commit separately** — `git commit -m "docs: Phase 3 summary"`
+**Changelog notes:**
+- **Fixed** — PR merges now publish to PyPI via release-triggered `publish.yml` workflow.
+- **Changed** — Publish job extracted from `version.yml` to separate `publish.yml`.
+- **Changed** — CI test matrix expanded to run all Python versions (3.10–3.14) on both Windows and Ubuntu, plus macOS with Python 3.12.
+- **Added** — README documentation for logging configuration file discovery and fallback behavior.
 
 ---
 
