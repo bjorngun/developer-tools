@@ -59,93 +59,86 @@ class TestGetLoggerFolder:
         """Should return standard path when script folders disabled."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         result = _get_logger_folder()
-        assert result == "./logs/2026/1.January"
+        assert result == "./logs/2026/01"
 
     @patch("dev_tools.logger_settings.datetime")
     def test_script_folder_with_param(self, mock_datetime, monkeypatch):
         """Should include script name in path when enabled and param provided."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "True")
 
         result = _get_logger_folder(script_name="provisioning")
-        assert result == "./logs/provisioning/2026/1.January"
+        assert result == "./logs/provisioning/2026/01"
 
     @patch("dev_tools.logger_settings.datetime")
     def test_script_folder_from_env_var(self, mock_datetime, monkeypatch):
         """Should use SCRIPT_NAME env var when param not provided."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "True")
         monkeypatch.setenv("SCRIPT_NAME", "sync")
 
         result = _get_logger_folder()
-        assert result == "./logs/sync/2026/1.January"
+        assert result == "./logs/sync/2026/01"
 
     @patch("dev_tools.logger_settings.datetime")
     def test_script_folder_param_overrides_env(self, mock_datetime, monkeypatch):
         """Script name param should take precedence over env var."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "True")
         monkeypatch.setenv("SCRIPT_NAME", "sync")
 
         result = _get_logger_folder(script_name="provisioning")
-        assert result == "./logs/provisioning/2026/1.January"
+        assert result == "./logs/provisioning/2026/01"
 
     @patch("dev_tools.logger_settings.datetime")
     def test_script_folder_with_day_specific(self, mock_datetime, monkeypatch):
         """Should include day when both script folders and day specific enabled."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "True")
         monkeypatch.setenv("LOGGER_DAY_SPECIFIC", "True")
 
         result = _get_logger_folder(script_name="provisioning")
-        assert result == "./logs/provisioning/2026/1.January/12"
+        assert result == "./logs/provisioning/2026/01/12"
 
     @patch("dev_tools.logger_settings.datetime")
     def test_no_script_folder_when_disabled(self, mock_datetime, monkeypatch):
         """Should not add script folder even with param when feature disabled."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "False")
 
         result = _get_logger_folder(script_name="provisioning")
-        assert result == "./logs/2026/1.January"
+        assert result == "./logs/2026/01"
 
     @patch("dev_tools.logger_settings.datetime")
     def test_custom_logger_path(self, mock_datetime, monkeypatch):
         """Should respect custom LOGGER_PATH."""
         mock_datetime.now.return_value.year = 2026
         mock_datetime.now.return_value.month = 1
-        mock_datetime.now.return_value.strftime.return_value = "January"
         mock_datetime.now.return_value.day = 12
 
         monkeypatch.setenv("LOGGER_PATH", "/var/logs")
         monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "True")
 
         result = _get_logger_folder(script_name="myapp")
-        assert result == "/var/logs/myapp/2026/1.January"
+        assert result == "/var/logs/myapp/2026/01"
 
 
 class TestLoggerSetupScriptName:

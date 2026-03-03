@@ -33,7 +33,7 @@ def is_script_folders_enabled() -> bool:
     """Check if script-specific log folders are enabled via environment variable.
     
     When enabled, logs are organized into subfolders by script name:
-        logs/{script_name}/2026/1.January/7/...
+        logs/{script_name}/2026/01/07/...
     
     Returns:
         True if LOGGER_SCRIPT_FOLDERS is set to a truthy value.
@@ -58,7 +58,7 @@ def _get_logger_folder(script_name: str | None = None) -> str:
     
     Returns:
         Full path to the log folder, e.g.:
-            ./logs/provisioning/2026/1.January/7/
+            ./logs/provisioning/2026/01/07/
     """
     today = datetime.now()
     logger_path = os.getenv("LOGGER_PATH", "./logs")
@@ -70,12 +70,9 @@ def _get_logger_folder(script_name: str | None = None) -> str:
             logger_path = f"{logger_path}/{effective_script}"
 
     current_year = today.year
-    current_month = f'{today.month}.{today.strftime("%B")}'
-    logger_folder_path = (
-        f'{logger_path}/{current_year}/{current_month}'
-    )
+    logger_folder_path = f'{logger_path}/{current_year}/{today.month:02d}'
     if is_logs_sorted_by_days():
-        logger_folder_path = f'{logger_folder_path}/{today.day}'
+        logger_folder_path = f'{logger_folder_path}/{today.day:02d}'
 
     return logger_folder_path
 
