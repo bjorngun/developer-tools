@@ -1,6 +1,6 @@
 # Bosos Dev Tools
 
-[![Python Versions](https://img.shields.io/pypi/pyversions/bosos-dev-tools.svg?logo=python&logoColor=white)](https://pypi.org/project/bosos-dev-tools/#files)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://pypi.org/project/bosos-dev-tools/)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey)](https://pypi.org/project/bosos-dev-tools/#files)
 [![PyPI Version](https://img.shields.io/pypi/v/bosos-dev-tools)](https://pypi.org/project/bosos-dev-tools/#history)
 [![PyPI status](https://img.shields.io/pypi/status/bosos-dev-tools.svg)](https://pypi.python.org/pypi/bosos-dev-tools/)
