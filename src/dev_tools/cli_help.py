@@ -56,9 +56,9 @@ progress_bar(iterable, decimals=1, length=50, **kwargs)
     Shows elapsed / remaining time when TIMING=True.
 
 timing_decorator
-    Decorator that prints elapsed time for the wrapped function.
-    If TIMING=True and the first arg has a .logger attribute,
-    logs the elapsed time as well.
+    Decorator that measures execution time of the wrapped function.
+    Only outputs when TIMING=True.  If the first arg has a .logger
+    attribute, logs the elapsed time as well.
 
 scan_all(root, *, skip_dirs=DEFAULT_SKIP_DIRS, check_anchors=True)
     Scan all markdown files under *root* for broken internal links.
@@ -126,7 +126,7 @@ def slow_function():
     import time; time.sleep(2)
 
 slow_function()
-# prints: Elapsed time for slow_function: 2.00 seconds
+# With TIMING=True: prints "Elapsed time for slow_function: 2.00 seconds"
 
 # 3. Progress bar
 from dev_tools import progress_bar

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `py.typed` PEP 561 marker file for type checker support.
+- `__version__` attribute accessible via `from dev_tools import __version__`.
+- `Homepage` URL in PyPI project metadata.
+- README documentation for logging configuration file discovery and fallback behavior.
+- Subprocess tests for `python -m dev_tools.md_link_checker` and `python -m dev_tools.codemap_generator` entry points.
+- Tests for `is_logs_sorted_by_days()`, `log_exit_code()`, error paths in `logger_setup()`, debug-mode branch, and `_default_logging_config()` return values.
+
+### Changed
+
+- **Breaking:** `timing_decorator` no longer prints elapsed time by default; requires `TIMING=True` env var.
+- Publish job extracted from `version.yml` to separate `publish.yml` workflow.
+- CI test matrix expanded to run all Python versions (3.10–3.14) on both Windows and Ubuntu, plus macOS with Python 3.12.
+
+### Fixed
+
+- `progress_bar` type hint changed from `Iterable` to `Collection` to accurately reflect `len()` requirement.
+- Removed duplicate `LOGGER_DAY_SPECIFIC` table row from README.
+- PR merges now publish to PyPI via release-triggered `publish.yml` workflow.
+
 ## [1.0.0] - 2026-03-03
 
 ### Removed
