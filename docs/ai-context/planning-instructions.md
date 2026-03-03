@@ -199,8 +199,9 @@ When you determine a plan document is needed:
 2. **Include the required plan header** (see [below](#required-plan-header)).
 3. **Write the Task Index first** — before any detail sections. This forces you to think through the full scope.
 4. **Add detail sections** below the Task Index for each task (headed `## Task N: Name`).
-5. **Include a Cleanup phase as the final phase** (see [Completing a Plan](#completing-a-plan-final-phase)).
-6. **Commit the plan** before starting execution:
+5. **Mark phase boundaries clearly** — each phase gets a `---` separator, a `## Phase N` heading at the start, and a `⚠️ Phase complete?` reminder at the end (see [Plan Detail Sections](#plan-detail-sections)).
+6. **Include a Cleanup phase as the final phase** (see [Completing a Plan](#completing-a-plan-final-phase)).
+7. **Commit the plan** before starting execution:
    ```bash
    git add docs/development-notes/{feature}-plan.md
    git commit -m "docs: Add {feature} plan"
@@ -247,13 +248,24 @@ The key elements:
 ### Task 2: Write tests for feature A
 ...
 
+> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+
 ---
 
 ## Phase 2 — Feature B
 
 ### Task 3: Refactor into sub-package
 ...
+
+> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+
+---
 ```
+
+**Phase boundary rules:**
+- Every phase starts with a horizontal rule (`---`) and a `## Phase N — Name` heading.
+- Every phase ends with a **phase completion reminder** callout (the `⚠️ Phase complete?` block shown above) followed by a horizontal rule.
+- This creates unambiguous visual boundaries so an agent always knows which phase they're in and never forgets the phase-end steps.
 
 This makes phases visually distinct in the plan body, not just in the Task Index table. When a phase is completed and summarized, the phase heading remains and the task detail below it is replaced with the condensed summary.
 
