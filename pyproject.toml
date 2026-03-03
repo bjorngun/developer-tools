@@ -41,6 +41,7 @@ testpaths = ['src/tests']
 pythonpath = ['src']
 
 [project.scripts]
+dev-tools = 'dev_tools.cli_help:main'
 md-link-checker = 'dev_tools.md_link_checker.cli:main'
 codemap-generator = 'dev_tools.codemap_generator:main'
 

@@ -7,6 +7,7 @@ database.
 
 import logging
 import os
+import warnings
 from datetime import datetime
 import getpass
 from pathlib import Path
@@ -16,6 +17,10 @@ import pyodbc
 class LogDBHandler(logging.Handler):
     """
     A custom logging handler that logs messages to a SQL database.
+
+    .. deprecated:: 0.3.0
+        LogDBHandler will be removed in version 1.0.  Migrate to a
+        standard logging handler or an external log-aggregation service.
 
     This handler overrides the logging.Handler class to provide functionality for logging messages
     to a SQL database. It manages the SQL connection and handles the insertion of log records into
@@ -31,6 +36,12 @@ class LogDBHandler(logging.Handler):
 
     def __init__(self, db_table: str):
         """Initializes the handler and the SQL connection."""
+        warnings.warn(
+            "LogDBHandler is deprecated and will be removed in version 1.0. "
+            "Migrate to a standard logging handler or an external log-aggregation service.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         logging.Handler.__init__(self)
         self.sql_cursor = self._get_sql_connection()
         self.db_table = db_table

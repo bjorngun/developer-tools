@@ -5,7 +5,7 @@
 - **Source layout:** `src/dev_tools/` (src-layout, installed via `pip install .`)
 - **Python:** `>=3.10`
 - **Purpose:** Reusable utility library for Python developers — logging, decorators, debugging, progress bars, markdown link checking, code map generation, and CLI tools. Imported by multiple other projects.
-- **Version:** `0.3.0`
+- **Version:** see `version` in `pyproject.toml`
 
 ---
 
@@ -71,7 +71,7 @@ Top-level exports from `dev_tools`:
 - `is_debug_on` — debug mode check
 - `progress_bar` — iterable progress visualization
 - `timing_decorator` — function execution timing
-- `LogDBHandler` — database logging handler
+- `LogDBHandler` — database logging handler *(deprecated, removed in 1.0)*
 - `scan_all` — markdown link checking (`md_link_checker`)
 - `CodeMapGenerator` — AST code map generation (`codemap_generator`)
 
@@ -84,3 +84,14 @@ Top-level exports from `dev_tools`:
 - **Run with coverage:** `pytest src/tests/ --cov=dev_tools --cov-report=html`
 - **Naming:** `test_<module_name>.py`, test classes `Test<ClassName>`, test functions `test_<behavior>`.
 - **Pattern:** Each module in `dev_tools/` should have a corresponding `test_*.py` in `src/tests/`.
+
+---
+
+### Pre-Push Checklist
+
+**CI requires passing tests and clean linting.** Before every push, run both:
+
+1. **Tests:** `pytest src/tests/ -v` — all tests must pass.
+2. **Linting:** `pylint src/dev_tools/` — must score 10/10 (CI fails on any warning or error).
+
+Do not push until both checks pass locally.
