@@ -15,8 +15,10 @@ jobs:
   version-bump:
     name: Bump Version
     runs-on: ubuntu-latest
-    # Only run on direct pushes OR merged PRs (not closed without merge)
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    # Skip bot commits (version bumps) and only run on direct pushes or merged PRs
+    if: |
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true))
     # Prevent concurrent version bumps - queue them instead of running in parallel
     concurrency:
       group: version-bump-${{ github.repository }}
