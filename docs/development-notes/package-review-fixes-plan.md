@@ -16,14 +16,18 @@
 | **0 — Packaging Metadata** | 0 | Add `py.typed` PEP 561 marker | [Details](#task-0-add-pytyped-pep-561-marker) | Janitor | 💚 | Simple | 5 min | [PEP 561](https://peps.python.org/pep-0561/) | ✅ Done |
 | | 1 | Add `__version__` to `__init__.py` | [Details](#task-1-add-__version__-to-__init__py) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
 | | 2 | Add `Homepage` URL to `pyproject.toml` | [Details](#task-2-add-homepage-url-to-pyprojecttoml) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
+| | 2g | ⏩ Phase 0 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Janitor | 💚 | Simple | 5 min | | |
 | **1 — Code Quality** | 3 | Guard `timing_decorator` print | [Details](#task-3-guard-timing_decorator-print) | Copilot | 💚 | Simple | 10 min | | |
 | | 4 | Fix `progress_bar` type hint | [Details](#task-4-fix-progress_bar-type-hint) | Copilot | 💚 | Simple | 10 min | | |
 | | 5 | Fix README duplicate line | [Details](#task-5-fix-readme-duplicate-line) | Librarian | 💚 | Simple | 5 min | | |
+| | 5g | ⏩ Phase 1 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Copilot | 💚 | Simple | 5 min | | |
 | **2 — Test Coverage** | 6 | Add `__main__.py` subprocess tests | [Details](#task-6-add-__main__py-subprocess-tests) | QA Engineer | 💛 | Medium | 25 min | | |
 | | 7 | Improve `logger_settings.py` coverage | [Details](#task-7-improve-logger_settingspy-coverage) | QA Engineer | 💛 | Medium | 20 min | | |
+| | 7g | ⏩ Phase 2 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
 | **3 — CI & Documentation** | 8 | Separate publish workflow | [Details](#task-8-separate-publish-workflow) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 9 | Expand CI OS test matrix | [Details](#task-9-expand-ci-os-test-matrix) | Copilot | 💚 | Simple | 10 min | | |
 | | 10 | Document `logging.conf` usage | [Details](#task-10-document-loggingconf-usage) | Librarian | 💚 | Simple | 15 min | | |
+| | 10g | ⏩ Phase 3 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Librarian | 💚 | Simple | 5 min | | |
 | **4 — Cleanup** | 11 | Finalize, update docs, delete plan | [Details](#task-11-finalize-update-docs-delete-plan) | Librarian | 💚 | Simple | 15 min | | |
 
 ---
@@ -68,7 +72,12 @@
 - `[project.urls]` contains `Homepage = "https://github.com/bjorngun/developer-tools"`.
 - Package still builds and installs.
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+> 🛑 **Phase complete? Do these 3 steps NOW (gate task `2g`):**
+> 1. **Run tests** — `pytest src/tests/ -v`
+> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
+> 3. **Commit separately** — `git commit -m "docs: Phase 0 summary"`
+>
+> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
 
 ---
 
@@ -120,7 +129,12 @@
 - The Markdown Link Checker section reads cleanly.
 - `md-link-checker` passes on the repo.
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+> 🛑 **Phase complete? Do these 3 steps NOW (gate task `5g`):**
+> 1. **Run tests** — `pytest src/tests/ -v`
+> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
+> 3. **Commit separately** — `git commit -m "docs: Phase 1 summary"`
+>
+> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
 
 ---
 
@@ -155,7 +169,12 @@
 
 **Notes:** Use `unittest.mock.patch` to simulate OSError on `Path.mkdir`, missing config files, etc. Be careful with `atexit` registration — may need cleanup in tests.
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+> 🛑 **Phase complete? Do these 3 steps NOW (gate task `7g`):**
+> 1. **Run tests** — `pytest src/tests/ -v`
+> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
+> 3. **Commit separately** — `git commit -m "docs: Phase 2 summary"`
+>
+> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
 
 ---
 
@@ -211,7 +230,12 @@
 - README contains a clear explanation under the logging section about config file discovery.
 - `md-link-checker` passes on the repo.
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+> 🛑 **Phase complete? Do these 3 steps NOW (gate task `10g`):**
+> 1. **Run tests** — `pytest src/tests/ -v`
+> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
+> 3. **Commit separately** — `git commit -m "docs: Phase 3 summary"`
+>
+> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
 
 ---
 
@@ -240,5 +264,3 @@
 - `CHANGELOG.md` has accurate `[Unreleased]` entry.
 - Plan file is deleted.
 - Clean commit ready for push.
-
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.

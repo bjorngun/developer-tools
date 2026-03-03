@@ -144,9 +144,12 @@ Everything else goes **below** the Task Index.
 | Phase | # | Task | Details | Agent | Cost | Complexity | Est. | Refs | Status |
 |-------|---|------|---------|-------|------|------------|------|------|--------|
 | **0 — Setup** | 0 | Create scaffolding | [Details](#task-0-create-scaffolding) | QA Engineer | 💚 | Simple | 10 min | | |
+| | 0g | ⏩ Phase 0 Summary | [Protocol](#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
 | **1 — Core** | 1 | Implement feature X | [Details](#task-1-implement-feature-x) | (per project) | 💛 | Medium | 30 min | | |
 | | 2 | Add error handling | [Details](#task-2-add-error-handling) | (per project) | 💚 | Simple | 15 min | | |
+| | 2g | ⏩ Phase 1 Summary | [Protocol](#after-completing-a-phase) | (per project) | 💚 | Simple | 5 min | | |
 | **2 — Polish** | 3 | Write tests | [Details](#task-3-write-tests) | QA Engineer | 💛 | Medium | 25 min | | |
+| | 3g | ⏩ Phase 2 Summary | [Protocol](#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
 | **N — Cleanup** | N | Finalize & update docs | [Details](#task-n-finalize--update-docs) | Librarian | 💚 | Simple | 15 min | | |
 ```
 
@@ -176,9 +179,16 @@ Phases group contextually-related tasks so an agent can work through them in a s
 ### Rules
 
 1. **Group by shared context** — Tasks within a phase should touch related files/concepts so the agent doesn't need to re-read unrelated code between tasks.
-2. **Keep phases small** — Aim for **2-5 tasks per phase**. If a phase has 6+ tasks, split it. A bloated phase means the context window fills up and output quality drops.
+2. **Keep phases small** — Aim for **2-5 tasks per phase** (not counting the gate task). If a phase has 6+ real tasks, split it. A bloated phase means the context window fills up and output quality drops.
 3. **Order phases by dependency** — Earlier phases should produce outputs that later phases build on.
 4. **Every plan ends with a Cleanup phase** — See [Completing a Plan](#completing-a-plan-final-phase).
+5. **Every phase (except Cleanup) ends with a Phase Summary gate task** — This is a real row in the Task Index, not just a callout. It ensures the phase summary is written and committed as a tracked deliverable. See [After Completing a Phase](#after-completing-a-phase) for what the summary must contain. The gate task format:
+   - **Task name:** `Phase N Summary` (e.g., `Phase 0 Summary`)
+   - **Agent:** The agent that completed the last task in the phase (or Librarian)
+   - **Cost:** 💚
+   - **Complexity:** Simple
+   - **Est.:** 5 min
+   - **Details link:** Points to the phase heading (no separate detail section needed — the protocol is in [After Completing a Phase](#after-completing-a-phase))
 
 ### Suggested Phase Pattern
 
@@ -248,7 +258,12 @@ The key elements:
 ### Task 2: Write tests for feature A
 ...
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+> 🛑 **Phase complete? Do these 3 steps NOW (gate task `1g`):**
+> 1. **Run tests** — project test command from `copilot-instructions.md`.
+> 2. **Write phase summary** — Replace stale task detail (What/Files/Acceptance) with a condensed summary. Keep headings + completion notes. Include: what was done, decisions, issues, notes for future phases, changelog bullets.
+> 3. **Commit separately** — `git commit -m "docs: Phase 1 summary"`
+>
+> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
 
 ---
 
@@ -257,14 +272,20 @@ The key elements:
 ### Task 3: Refactor into sub-package
 ...
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+> 🛑 **Phase complete? Do these 3 steps NOW (gate task `3g`):**
+> 1. **Run tests** — project test command from `copilot-instructions.md`.
+> 2. **Write phase summary** — Replace stale task detail with condensed summary. Keep headings + completion notes.
+> 3. **Commit separately** — `git commit -m "docs: Phase 2 summary"`
+>
+> Full protocol: [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase)
 
 ---
 ```
 
 **Phase boundary rules:**
 - Every phase starts with a horizontal rule (`---`) and a `## Phase N — Name` heading.
-- Every phase ends with a **phase completion reminder** callout (the `⚠️ Phase complete?` block shown above) followed by a horizontal rule.
+- Every phase ends with a **phase completion callout** (the `🛑 Phase complete?` block shown above) followed by a horizontal rule. This callout **inlines the 3 required steps** so agents don't need to click through a link. It also references the gate task number so the agent knows to mark it done.
+- Every phase (except Cleanup) has a **gate task** as its last row in the Task Index — the `⏩ Phase N Summary` row. This is a real tracked task that must be marked `✅ Done` after the phase summary is written and committed.
 - This creates unambiguous visual boundaries so an agent always knows which phase they're in and never forgets the phase-end steps.
 
 This makes phases visually distinct in the plan body, not just in the Task Index table. When a phase is completed and summarized, the phase heading remains and the task detail below it is replaced with the condensed summary.
