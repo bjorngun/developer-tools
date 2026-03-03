@@ -1,4 +1,4 @@
-name: Test and Publish Package
+name: Test
 
 on:
   push:
@@ -73,25 +73,3 @@ jobs:
       with:
         file: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
-
-  publish:
-    needs: [build, lint, test]
-    runs-on: windows-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v6.0.2
-    - uses: actions/setup-python@v6.2.0
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine
-        pip install .
-    - name: Build package
-      run: python -m build
-    - name: Publish package to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: python -m twine upload dist/*

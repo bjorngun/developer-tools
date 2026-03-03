@@ -68,12 +68,12 @@ class LinkCheckError(Exception):
 # Enums
 # ---------------------------------------------------------------------------
 
-class LinkStatus(enum.StrEnum):
+class LinkStatus(str, enum.Enum):
     """Status of a checked link.
 
-    Using a ``StrEnum`` lets callers compare against plain strings
+    Inheriting from ``str`` lets callers compare against plain strings
     (``result.status == "ok"``) while enabling exhaustiveness checks
-    in ``match`` / ``if`` chains.
+    in ``match`` / ``if`` chains.  Compatible with Python 3.10+.
     """
 
     OK = "ok"
