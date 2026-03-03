@@ -26,7 +26,7 @@
 | | 7g | ⏩ Phase 2 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | ✅ Done |
 | **3 — CI & Documentation** | 8 | Separate publish workflow | [Details](#task-8-separate-publish-workflow) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 9 | Expand CI OS test matrix | [Details](#task-9-expand-ci-os-test-matrix) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
-| | 10 | Document `logging.conf` usage | [Details](#task-10-document-loggingconf-usage) | Librarian | 💚 | Simple | 15 min | | |
+| | 10 | Document `logging.conf` usage | [Details](#task-10-document-loggingconf-usage) | Librarian | 💚 | Simple | 15 min | | ✅ Done |
 | | 10g | ⏩ Phase 3 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Librarian | 💚 | Simple | 5 min | | |
 | **4 — Cleanup** | 11 | Finalize, update docs, delete plan | [Details](#task-11-finalize-update-docs-delete-plan) | Librarian | 💚 | Simple | 15 min | | |
 
@@ -156,6 +156,11 @@
 **Acceptance criteria:**
 - README contains a clear explanation under the logging section about config file discovery.
 - `md-link-checker` passes on the repo.
+
+**Completion note (2026-03-03):**
+- Added "Logging Configuration File" subsection to README under the logging usage section.
+- Documents config file discovery order (`logging.conf` / `logging_dev.conf`), fallback to built-in default, and `LOGGER_CONF_PATH` / `LOGGER_CONF_DEV_PATH` / `DEBUG` env vars.
+- **Changelog:** Added — README documentation for logging configuration file discovery and fallback behavior.
 
 ---
 

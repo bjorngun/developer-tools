@@ -96,6 +96,21 @@ The folder path is controlled by environment variables:
 | `LOGGER_DAY_SPECIFIC` | `False` | Add a day subfolder (zero-padded) |
 | `LOGGER_SCRIPT_FOLDERS` | `False` | Add a script-name subfolder before the year |
 
+#### Logging Configuration File
+
+`logger_setup()` looks for an INI-style logging config file in the current working directory:
+
+- **Normal mode:** `logging.conf` (override with `LOGGER_CONF_PATH`)
+- **Debug mode** (`DEBUG=True`): `logging_dev.conf` (override with `LOGGER_CONF_DEV_PATH`)
+
+If the config file is not found, a sensible **built-in default** is used automatically — no `.conf` file is required. The default configuration writes to both a file handler (all messages) and a console handler (warnings only; or all messages in debug mode).
+
+| Variable | Default | Description |
+|---|---|---|
+| `LOGGER_CONF_PATH` | `logging.conf` | Path to the logging config file |
+| `LOGGER_CONF_DEV_PATH` | `logging_dev.conf` | Path to the debug logging config file |
+| `DEBUG` | `False` | Enable debug mode (verbose console output) |
+
 ### Markdown Link Checker
 
 Scan markdown files for broken internal links. Available as a library or a CLI tool.
