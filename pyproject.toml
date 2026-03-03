@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bosos-dev-tools"
-version = "1.0.1"
+version = "1.0.2"
 description = "Dev Tools is a collection of utility tools for Python developers — logging, decorators, debugging, progress bars, a markdown link checker, and an AST-based code map generator."
 readme = "README.md"
 keywords = [ "development", "tools", "logging", "decorators",]
