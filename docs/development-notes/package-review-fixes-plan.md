@@ -21,9 +21,9 @@
 | | 4 | Fix `progress_bar` type hint | [Details](#task-4-fix-progress_bar-type-hint) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 5 | Fix README duplicate line | [Details](#task-5-fix-readme-duplicate-line) | Librarian | 💚 | Simple | 5 min | | ✅ Done |
 | | 5g | ⏩ Phase 1 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Copilot | 💚 | Simple | 5 min | | ✅ Done |
-| **2 — Test Coverage** | 6 | Add `__main__.py` subprocess tests | [Details](#task-6-add-__main__py-subprocess-tests) | QA Engineer | 💛 | Medium | 25 min | | |
-| | 7 | Improve `logger_settings.py` coverage | [Details](#task-7-improve-logger_settingspy-coverage) | QA Engineer | 💛 | Medium | 20 min | | |
-| | 7g | ⏩ Phase 2 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
+| **2 — Test Coverage** | 6 | Add `__main__.py` subprocess tests | [Details](#task-6-add-__main__py-subprocess-tests) | QA Engineer | 💛 | Medium | 25 min | | ✅ Done |
+| | 7 | Improve `logger_settings.py` coverage | [Details](#task-7-improve-logger_settingspy-coverage) | QA Engineer | 💛 | Medium | 20 min | | ✅ Done |
+| | 7g | ⏩ Phase 2 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | ✅ Done |
 | **3 — CI & Documentation** | 8 | Separate publish workflow | [Details](#task-8-separate-publish-workflow) | Copilot | 💚 | Simple | 10 min | | ✅ Done |
 | | 9 | Expand CI OS test matrix | [Details](#task-9-expand-ci-os-test-matrix) | Copilot | 💚 | Simple | 10 min | | |
 | | 10 | Document `logging.conf` usage | [Details](#task-10-document-loggingconf-usage) | Librarian | 💚 | Simple | 15 min | | |
@@ -78,56 +78,24 @@
 
 ---
 
-## Phase 2 — Test Coverage
+## Phase 2 — Test Coverage (Summary)
 
-### Task 6: Add `__main__.py` subprocess tests
+**Completed:** 2026-03-03 · 199 tests pass · pylint 10/10
 
-**What:** Both `src/dev_tools/md_link_checker/__main__.py` and `src/dev_tools/codemap_generator/__main__.py` have 0% test coverage. Add subprocess-based tests that invoke `python -m dev_tools.md_link_checker` and `python -m dev_tools.codemap_generator` and verify they produce expected output / exit codes.
+| Task | What was done |
+|------|---------------|
+| **Task 6** — `__main__.py` subprocess tests | Added `TestMainModule` class to `test_md_link_checker.py` (3 tests: `--help`, valid scan, invalid root) and `test_codemap_generator.py` (3 tests: `--help`, missing `--package`, analyze fixture package). All use `subprocess.run([sys.executable, "-m", ...])` pattern. |
+| **Task 7** — `logger_settings.py` coverage | Added 5 new test classes to `test_logger_settings.py`: `TestIsLogsSortedByDays` (env var truthy/falsy), `TestLogExitCode` (exit 0 vs 1), `TestLoggerSetupErrorPaths` (mkdir failure, fileConfig failure), `TestLoggerSetupDebugMode` (debug branch with dictConfig/fileConfig), `TestDefaultLoggingConfig` (return structure, debug vs non-debug levels). |
 
-**Files:**
-- Modify: `src/tests/test_md_link_checker.py` (add `__main__` tests)
-- Modify: `src/tests/test_codemap_generator.py` (add `__main__` tests)
+**Decisions:** Used `subprocess.run` with `check=False` and `timeout=30` for `__main__` tests rather than importing modules directly — ensures the actual `__main__.py` entry points are exercised. Used `unittest.mock.patch` for error-path tests rather than creating real filesystem failures.
 
-**Acceptance criteria:**
-- Both `__main__.py` files have >0% coverage (ideally 100% — they're typically 3-5 lines).
-- All 169+ tests still pass, plus new ones.
+**Issues:** None.
 
-**Notes:** Use `subprocess.run([sys.executable, "-m", "dev_tools.md_link_checker", ...])` pattern. Keep tests fast — use `--help` or minimal inputs.
+**Notes for future phases:** None.
 
----
-
-### Task 7: Improve `logger_settings.py` coverage
-
-**What:** `logger_settings.py` is at 84% coverage. Identify uncovered branches (likely error paths: directory creation failure, config file parse failure, fallback dict config) and add targeted tests.
-
-**Files:**
-- Modify: `src/tests/test_logger_settings.py`
-
-**Acceptance criteria:**
-- `logger_settings.py` coverage reaches ≥95%.
-- All tests pass.
-
-**Notes:** Use `unittest.mock.patch` to simulate OSError on `Path.mkdir`, missing config files, etc. Be careful with `atexit` registration — may need cleanup in tests.
-
----
-
-### ⏩ Phase 2 Summary (Task 7g)
-
-> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
-
-**Steps:**
-
-1. **Run tests** — `pytest src/tests/ -v` (all must pass).
-2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
-3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
-   - What was done (per task, 1–2 lines each)
-   - Key decisions made
-   - Issues encountered
-   - Notes for future phases
-   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
-   - Keep task headings and completion notes — remove original planning detail.
-4. **Mark this task `✅ Done`** in the Task Index.
-5. **Commit separately** — `git commit -m "docs: Phase 2 summary"`
+**Changelog notes:**
+- **Added** — Subprocess tests for `python -m dev_tools.md_link_checker` and `python -m dev_tools.codemap_generator` entry points.
+- **Added** — Tests for `is_logs_sorted_by_days()`, `log_exit_code()`, error paths in `logger_setup()`, debug-mode branch, and `_default_logging_config()` return values.
 
 ---
 

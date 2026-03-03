@@ -1,5 +1,7 @@
 """Tests for the dev_tools.md_link_checker sub-package."""
 
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -528,3 +530,55 @@ class TestCLI:
         assert exit_code == 0
         captured = capsys.readouterr()
         assert "SKIPPED" in captured.out
+
+
+# ===================================================================
+# TestMainModule — subprocess tests for __main__.py
+# ===================================================================
+
+
+class TestMainModule:
+    """Tests for running ``python -m dev_tools.md_link_checker``."""
+
+    def test_help_flag_exits_zero(self) -> None:
+        """--help should exit 0 and print usage information."""
+        result = subprocess.run(
+            [sys.executable, "-m", "dev_tools.md_link_checker", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 0
+        assert "usage" in result.stdout.lower()
+
+    def test_scan_valid_directory(self, tmp_path: Path) -> None:
+        """Running against a directory with a clean markdown file should exit 0."""
+        md_file = tmp_path / "readme.md"
+        md_file.write_text("# Hello\n", encoding="utf-8")
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "dev_tools.md_link_checker",
+                "--root", str(tmp_path), "--no-color",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 0
+
+    def test_invalid_root_exits_nonzero(self, tmp_path: Path) -> None:
+        """Running against a non-existent directory should exit with code 2."""
+        fake_dir = tmp_path / "does_not_exist"
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "dev_tools.md_link_checker",
+                "--root", str(fake_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 2
