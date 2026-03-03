@@ -126,7 +126,7 @@ def logger_setup(script_name: str | None = None) -> None:
     logger.info("Setting up logger for %s", os.getenv("SCRIPT_NAME", Path.cwd().name))
 
 
-def _default_logging_config(logger_file_path: str) -> None:
+def _default_logging_config(logger_file_path: str) -> dict[str, object]:
     """Return the default logging configuration.
 
     Args:

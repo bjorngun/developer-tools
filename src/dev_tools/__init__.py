@@ -12,7 +12,7 @@ in Python applications. Included modules are:
 - codemap_generator: AST-based Python code documentation generator.
 """
 
-from importlib.metadata import version
+from importlib.metadata import version, PackageNotFoundError
 
 from dev_tools.progress_bar import progress_bar
 from dev_tools.custom_decorators import timing_decorator
@@ -21,7 +21,10 @@ from dev_tools.logger_settings import logger_setup
 from dev_tools.md_link_checker import scan_all
 from dev_tools.codemap_generator import CodeMapGenerator
 
-__version__ = version("bosos-dev-tools")
+try:
+    __version__ = version("bosos-dev-tools")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = [
     "__version__",

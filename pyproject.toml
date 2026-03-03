@@ -36,6 +36,9 @@ Tracker = "https://github.com/bjorngun/developer-tools/issues"
 testpaths = [ "src/tests",]
 pythonpath = [ "src",]
 
+[tool.setuptools.package-data]
+dev_tools = ["py.typed"]
+
 [tool.setuptools.package-dir]
 "" = "src"
 
