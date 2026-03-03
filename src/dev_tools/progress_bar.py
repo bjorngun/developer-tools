@@ -7,8 +7,11 @@ debugging and timing estimations.
 
 import logging
 import time
-from collections.abc import Iterable
+from collections.abc import Collection, Iterator
+from typing import TypeVar
 from dev_tools.debug_tools import is_debug_on, is_timing_on, human_readable_time
+
+T = TypeVar("T")
 
 
 def _get_estimation_time_remaining(
@@ -40,24 +43,26 @@ def _get_estimation_time_remaining(
 
     return f" |--{et_str} - {eta_str}--|"
 
-def progress_bar(
-    iterable: Iterable,
+def progress_bar(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    iterable: Collection[T],
     decimals: int = 1,
     length: int = 50,
-    **kwargs: dict,
-) -> Iterable:
+    prefix: str = "",
+    suffix: str = "",
+    fill: str = "█",
+    print_end: str = "\r",
+) -> Iterator[T]:
     """
-    Displays a terminal progress bar for an iterable.
+    Displays a terminal progress bar for a sized collection.
 
     Args:
-        iterable (Iterable): Required. Iterable object to track progress.
+        iterable (Collection): Required. A sized, iterable collection to track progress.
         decimals (int): Optional. Number of decimals in percent complete. Default is 1.
         length (int): Optional. Character length of the progress bar. Default is 50.
-        **kwargs (dict): Additional optional arguments:
-            - prefix (str): Prefix string for the progress bar. Default is "".
-            - suffix (str): Suffix string for the progress bar. Default is "".
-            - fill (str): Bar fill character. Default is "█".
-            - print_end (str): End character (e.g., "\r", "\r\n"). Default is "\r".
+        prefix (str): Optional. Prefix string for the progress bar. Default is "".
+        suffix (str): Optional. Suffix string for the progress bar. Default is "".
+        fill (str): Optional. Bar fill character. Default is "█".
+        print_end (str): Optional. End character (e.g., "\\r", "\\r\\n"). Default is "\\r".
 
     Yields:
         Iterable: Items from the provided iterable, with progress displayed.
@@ -66,10 +71,6 @@ def progress_bar(
     total = len(iterable)
     start_time = time.time()
     logger = logging.getLogger(__name__)
-    prefix = kwargs.get('prefix', '')
-    suffix = kwargs.get('suffix', '')
-    fill = kwargs.get('fill', '█')
-    print_end = kwargs.get('print_end', '\r')
     errors = {}
 
     def print_progress_bar(iteration: int) -> None:

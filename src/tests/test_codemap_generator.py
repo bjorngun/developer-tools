@@ -1,5 +1,6 @@
 """Tests for the dev_tools.codemap_generator sub-package."""
 
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
@@ -883,3 +884,63 @@ class TestEdgeCases:
         assert any(filename in p for p in all_paths) or any(
             filename.replace(".py", "") in m for m in all_modules
         )
+
+
+# ===================================================================
+# TestMainModule — subprocess tests for __main__.py
+# ===================================================================
+
+
+class TestMainModule:
+    """Tests for running ``python -m dev_tools.codemap_generator``."""
+
+    def test_help_flag_exits_zero(self) -> None:
+        """--help should exit 0 and print usage information."""
+        result = subprocess.run(
+            [sys.executable, "-m", "dev_tools.codemap_generator", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 0
+        assert "usage" in result.stdout.lower()
+
+    def test_missing_required_arg_exits_nonzero(self) -> None:
+        """Running without --package should exit with code 2."""
+        result = subprocess.run(
+            [sys.executable, "-m", "dev_tools.codemap_generator"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 2
+        assert "--package" in result.stderr
+
+    def test_analyze_fixture_package(self, tmp_path: Path) -> None:
+        """Running against a minimal package should exit 0 and produce output files."""
+        src = tmp_path / "src"
+        pkg = src / "test_pkg"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text('"""Test pkg."""\n', encoding="utf-8")
+        (pkg / "mod.py").write_text(
+            'def hello():\n    """Say hello."""\n    return "hi"\n',
+            encoding="utf-8",
+        )
+        output_dir = tmp_path / "output"
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "dev_tools.codemap_generator",
+                "--package", "test_pkg",
+                "--src-root", str(src),
+                "--output-dir", str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 0
+        assert output_dir.exists()
+        assert (output_dir / "code-map.md").exists()

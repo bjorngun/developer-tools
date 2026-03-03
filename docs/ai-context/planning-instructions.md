@@ -21,6 +21,7 @@
     - [After Completing a Phase](#after-completing-a-phase)
   - [Task Index Format](#task-index-format)
     - [Canonical Format](#canonical-format)
+    - [Phase Summary Gate Task Template](#phase-summary-gate-task-template)
     - [Column Definitions](#column-definitions)
   - [Phase Guidelines](#phase-guidelines)
     - [Why Phases?](#why-phases)
@@ -100,29 +101,9 @@ Examples: `cli-refactor-plan.md`, `test-suite-reorganization-plan.md`, `v2-migra
 
 ### After Completing a Phase
 
-> **This is a separate step from per-task completion notes.** Task notes are written *during* execution for the benefit of the next task. The phase summary is written *after all tasks in the phase are done*, for the benefit of future agents who open the plan and need a quick overview without reading stale detail.
+> The gate task at the end of each phase contains the full step-by-step protocol. See [Phase Summary Gate Task Template](#phase-summary-gate-task-template) for the canonical version. Agents should follow the steps in their plan's gate task section — not this prose.
 
-1. **Run tests** using the project's test command (see `copilot-instructions.md`).
-2. **Write a phase summary** — This is a **mandatory, distinct deliverable**. Do not skip it, and do not confuse it with the per-task completion notes you already wrote.
-
-   **What to do:** Replace the detailed task sections (What/Files/Acceptance criteria) for all completed tasks in the phase with a single, condensed phase-level summary block. Keep the task headings and their completion notes — remove the original planning detail that is now stale.
-
-   **What to include** (assemble from the per-task completion notes — not from memory):
-   - What was done (per task, 1-2 lines each)
-   - Key decisions made (compiled from task notes)
-   - Any issues encountered (compiled from task notes)
-   - Notes for future phases
-   - **Changelog notes** — Compiled from per-task changelog bullets into a single phase-level list
-
-   **Why this matters:** Future agents reading the plan see completed phases as brief summaries and uncompleted phases as full detail. This keeps the plan file lean and navigable. Without this step, the plan accumulates stale detail that wastes context window space and confuses future readers.
-
-3. **Commit** the phase summary update:
-   ```bash
-   git add -A
-   git commit -m "docs: Phase N summary"
-   ```
-
-> **Checklist reminder:** If you use `manage_todo_list` or similar, add an explicit "Write phase summary" item between "Run tests" and "Commit" so this step is never accidentally merged into the commit step.
+The phase summary replaces stale planning detail with a condensed block so future agents see completed phases as brief summaries and uncompleted phases as full detail. This keeps the plan file lean and avoids wasting context window space on outdated information.
 
 ---
 
@@ -144,10 +125,37 @@ Everything else goes **below** the Task Index.
 | Phase | # | Task | Details | Agent | Cost | Complexity | Est. | Refs | Status |
 |-------|---|------|---------|-------|------|------------|------|------|--------|
 | **0 — Setup** | 0 | Create scaffolding | [Details](#task-0-create-scaffolding) | QA Engineer | 💚 | Simple | 10 min | | |
+| | 0g | ⏩ Phase 0 Summary | [Protocol](#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
 | **1 — Core** | 1 | Implement feature X | [Details](#task-1-implement-feature-x) | (per project) | 💛 | Medium | 30 min | | |
 | | 2 | Add error handling | [Details](#task-2-add-error-handling) | (per project) | 💚 | Simple | 15 min | | |
+| | 2g | ⏩ Phase 1 Summary | [Protocol](#after-completing-a-phase) | (per project) | 💚 | Simple | 5 min | | |
 | **2 — Polish** | 3 | Write tests | [Details](#task-3-write-tests) | QA Engineer | 💛 | Medium | 25 min | | |
+| | 3g | ⏩ Phase 2 Summary | [Protocol](#after-completing-a-phase) | QA Engineer | 💚 | Simple | 5 min | | |
 | **N — Cleanup** | N | Finalize & update docs | [Details](#task-n-finalize--update-docs) | Librarian | 💚 | Simple | 15 min | | |
+```
+
+### Phase Summary Gate Task Template
+
+**Copy this verbatim** as the last task detail section in every phase (except Cleanup). Replace `{N}` with the phase number and `{Ng}` with the gate task number.
+
+```markdown
+### ⏩ Phase {N} Summary (Task {Ng})
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase {N} summary"`
 ```
 
 ### Column Definitions
@@ -176,9 +184,17 @@ Phases group contextually-related tasks so an agent can work through them in a s
 ### Rules
 
 1. **Group by shared context** — Tasks within a phase should touch related files/concepts so the agent doesn't need to re-read unrelated code between tasks.
-2. **Keep phases small** — Aim for **2-5 tasks per phase**. If a phase has 6+ tasks, split it. A bloated phase means the context window fills up and output quality drops.
+2. **Keep phases small** — Aim for **2-5 tasks per phase** (not counting the gate task). If a phase has 6+ real tasks, split it. A bloated phase means the context window fills up and output quality drops.
 3. **Order phases by dependency** — Earlier phases should produce outputs that later phases build on.
 4. **Every plan ends with a Cleanup phase** — See [Completing a Plan](#completing-a-plan-final-phase).
+5. **Every phase (except Cleanup) ends with a Phase Summary gate task** — This is a real row in the Task Index with its own detail section in the plan body. Copy the [Phase Summary Gate Task Template](#phase-summary-gate-task-template) verbatim into each phase. The gate task format in the Task Index:
+   - **Task name:** `⏩ Phase N Summary`
+   - **#:** `Ng` where N is the last real task number in the phase (e.g., `2g`, `5g`)
+   - **Agent:** The agent that completed the last task in the phase (or Librarian)
+   - **Cost:** 💚
+   - **Complexity:** Simple
+   - **Est.:** 5 min
+   - **Details link:** `[Details](#phase-n-summary)` pointing to the copied template section
 
 ### Suggested Phase Pattern
 
@@ -248,7 +264,23 @@ The key elements:
 ### Task 2: Write tests for feature A
 ...
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+### ⏩ Phase 1 Summary (Task 2g)
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase 1 summary"`
 
 ---
 
@@ -257,14 +289,31 @@ The key elements:
 ### Task 3: Refactor into sub-package
 ...
 
-> ⚠️ **Phase complete?** Follow [After Completing a Phase](../ai-context/planning-instructions.md#after-completing-a-phase) — run tests, write phase summary, commit.
+### ⏩ Phase 2 Summary (Task 3g)
+
+> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
+
+**Steps:**
+
+1. **Run tests** — `pytest src/tests/ -v` (all must pass).
+2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
+3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
+   - What was done (per task, 1–2 lines each)
+   - Key decisions made
+   - Issues encountered
+   - Notes for future phases
+   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
+   - Keep task headings and completion notes — remove original planning detail.
+4. **Mark this task `✅ Done`** in the Task Index.
+5. **Commit separately** — `git commit -m "docs: Phase 2 summary"`
 
 ---
 ```
 
 **Phase boundary rules:**
 - Every phase starts with a horizontal rule (`---`) and a `## Phase N — Name` heading.
-- Every phase ends with a **phase completion reminder** callout (the `⚠️ Phase complete?` block shown above) followed by a horizontal rule.
+- Every phase (except Cleanup) ends with a **gate task detail section** — a `### ⏩ Phase N Summary (Task Ng)` heading copied from the [Phase Summary Gate Task Template](#phase-summary-gate-task-template). This is the agent's step-by-step checklist for closing out the phase.
+- Every phase (except Cleanup) has a corresponding **gate task row** in the Task Index (`⏩ Phase N Summary`) that must be marked `✅ Done` after the summary is written and committed.
 - This creates unambiguous visual boundaries so an agent always knows which phase they're in and never forgets the phase-end steps.
 
 This makes phases visually distinct in the plan body, not just in the Task Index table. When a phase is completed and summarized, the phase heading remains and the task detail below it is replaced with the condensed summary.

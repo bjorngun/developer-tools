@@ -28,12 +28,16 @@ md-link-checker = "dev_tools.md_link_checker.cli:main"
 codemap-generator = "dev_tools.codemap_generator:main"
 
 [project.urls]
+Homepage = "https://github.com/bjorngun/developer-tools"
 Source = "https://github.com/bjorngun/developer-tools"
 Tracker = "https://github.com/bjorngun/developer-tools/issues"
 
 [tool.pytest.ini_options]
 testpaths = [ "src/tests",]
 pythonpath = [ "src",]
+
+[tool.setuptools.package-data]
+dev_tools = ["py.typed"]
 
 [tool.setuptools.package-dir]
 "" = "src"
