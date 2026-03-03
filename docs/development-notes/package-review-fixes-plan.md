@@ -16,7 +16,7 @@
 | **0 — Packaging Metadata** | 0 | Add `py.typed` PEP 561 marker | [Details](#task-0-add-pytyped-pep-561-marker) | Janitor | 💚 | Simple | 5 min | [PEP 561](https://peps.python.org/pep-0561/) | ✅ Done |
 | | 1 | Add `__version__` to `__init__.py` | [Details](#task-1-add-__version__-to-__init__py) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
 | | 2 | Add `Homepage` URL to `pyproject.toml` | [Details](#task-2-add-homepage-url-to-pyprojecttoml) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
-| | 2g | ⏩ Phase 0 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Janitor | 💚 | Simple | 5 min | | |
+| | 2g | ⏩ Phase 0 Summary | [Protocol](../ai-context/planning-instructions.md#after-completing-a-phase) | Janitor | 💚 | Simple | 5 min | | ✅ Done |
 | **1 — Code Quality** | 3 | Guard `timing_decorator` print | [Details](#task-3-guard-timing_decorator-print) | Copilot | 💚 | Simple | 10 min | | |
 | | 4 | Fix `progress_bar` type hint | [Details](#task-4-fix-progress_bar-type-hint) | Copilot | 💚 | Simple | 10 min | | |
 | | 5 | Fix README duplicate line | [Details](#task-5-fix-readme-duplicate-line) | Librarian | 💚 | Simple | 5 min | | |
@@ -32,65 +32,26 @@
 
 ---
 
-## Phase 0 — Packaging Metadata
+## Phase 0 — Packaging Metadata (Summary)
 
-### Task 0: Add `py.typed` PEP 561 marker
+**Completed:** 2026-03-03 · Commit `0396937`
 
-**What:** Create an empty `py.typed` marker file at `src/dev_tools/py.typed` so that type checkers (mypy, pyright, Pylance) recognize this package as typed. This is a PEP 561 requirement for packages that ship inline type hints.
+| Task | What was done |
+|------|---------------|
+| **Task 0** — `py.typed` marker | Created empty `src/dev_tools/py.typed` for PEP 561 compliance. |
+| **Task 1** — `__version__` | Added `__version__` to `src/dev_tools/__init__.py` via `importlib.metadata.version("bosos-dev-tools")`. Added to `__all__`. |
+| **Task 2** — Homepage URL | Added `Homepage` to `[project.urls]` in `pyproject.toml`. |
 
-**Files:**
-- Create: `src/dev_tools/py.typed`
+**Decisions:** Used `importlib.metadata` (stdlib, no new dependency) rather than hard-coding the version string.
 
-**Acceptance criteria:**
-- `src/dev_tools/py.typed` exists and is empty.
-- `pytest` and `pylint` still pass.
+**Issues:** None.
 
----
+**Notes for future phases:** None.
 
-### Task 1: Add `__version__` to `__init__.py`
-
-**What:** Add a `__version__` attribute to `src/dev_tools/__init__.py` using `importlib.metadata.version()` so consumers can do `from dev_tools import __version__` or `dev_tools.__version__`. Add it to `__all__` as well.
-
-**Files:**
-- Modify: `src/dev_tools/__init__.py`
-
-**Acceptance criteria:**
-- `from dev_tools import __version__` works and returns the correct version string.
-- `__version__` is listed in `__all__`.
-- Tests and lint pass.
-
----
-
-### Task 2: Add `Homepage` URL to `pyproject.toml`
-
-**What:** Add a `Homepage` entry to `[project.urls]` in `pyproject.toml`. PyPI displays `Homepage` prominently; currently only `Source` and `Tracker` are listed.
-
-**Files:**
-- Modify: `pyproject.toml`
-
-**Acceptance criteria:**
-- `[project.urls]` contains `Homepage = "https://github.com/bjorngun/developer-tools"`.
-- Package still builds and installs.
-
----
-
-### ⏩ Phase 0 Summary (Task 2g)
-
-> 🛑 **This is a gate task.** Do not start the next phase until this is `✅ Done`.
-
-**Steps:**
-
-1. **Run tests** — `pytest src/tests/ -v` (all must pass).
-2. **Run lint** — `pylint src/dev_tools/` (must score 10/10).
-3. **Write phase summary** — Replace the stale task detail sections in this phase (What/Files/Acceptance criteria) with a condensed summary block:
-   - What was done (per task, 1–2 lines each)
-   - Key decisions made
-   - Issues encountered
-   - Notes for future phases
-   - **Changelog notes** — Added/Changed/Removed/Fixed (user-facing perspective)
-   - Keep task headings and completion notes — remove original planning detail.
-4. **Mark this task `✅ Done`** in the Task Index.
-5. **Commit separately** — `git commit -m "docs: Phase 0 summary"`
+**Changelog notes:**
+- **Added** — `py.typed` PEP 561 marker file for type checker support.
+- **Added** — `__version__` attribute accessible via `from dev_tools import __version__`.
+- **Added** — `Homepage` URL in PyPI project metadata.
 
 ---
 
