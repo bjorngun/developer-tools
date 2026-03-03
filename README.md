@@ -2,9 +2,10 @@
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/bosos-dev-tools.svg?logo=python&logoColor=white)](https://pypi.org/project/bosos-dev-tools/#files)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey)](https://pypi.org/project/bosos-dev-tools/#files)
-[![PypI Versions](https://img.shields.io/pypi/v/bosos-dev-tools)](https://pypi.org/project/bosos-dev-tools/#history)
+[![PyPI Version](https://img.shields.io/pypi/v/bosos-dev-tools)](https://pypi.org/project/bosos-dev-tools/#history)
 [![PyPI status](https://img.shields.io/pypi/status/bosos-dev-tools.svg)](https://pypi.python.org/pypi/bosos-dev-tools/)
-[![Github Actions Test and Publish Status](https://github.com/bjorngun/developer-tools/actions/workflows/test-and-publish.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions)
+[![Test](https://github.com/bjorngun/developer-tools/actions/workflows/test.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions/workflows/test.yml)
+[![Version & Release](https://github.com/bjorngun/developer-tools/actions/workflows/version.yml/badge.svg)](https://github.com/bjorngun/developer-tools/actions/workflows/version.yml)
 [![codecov](https://codecov.io/gh/bjorngun/developer-tools/graph/badge.svg?token=LZKYK9IK5K)](https://codecov.io/gh/bjorngun/developer-tools)
 [![License](https://img.shields.io/pypi/l/bosos-dev-tools)](LICENSE)
 
