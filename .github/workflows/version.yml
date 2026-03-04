@@ -321,7 +321,9 @@ jobs:
           fetch-depth: 0
 
       - name: Download PR description
+        id: download-pr-body
         uses: actions/download-artifact@v8.0.0
+        continue-on-error: true
         with:
           name: pr-description
           path: .
@@ -350,15 +352,19 @@ jobs:
           echo "## ${PR_TITLE} (#${PR_NUMBER})" >> release_notes.md
           echo "" >> release_notes.md
 
-          # Add the full PR description
+          # Use artifact PR body if available, otherwise fall back to event body
           if [ -f pr_body.md ] && [ -s pr_body.md ]; then
             cat pr_body.md >> release_notes.md
+          elif [ -n "$PR_BODY" ]; then
+            echo "$PR_BODY" >> release_notes.md
           else
             echo "No detailed description provided." >> release_notes.md
           fi
 
           echo "Release notes prepared for v${VERSION}"
           cat release_notes.md
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.5.0
