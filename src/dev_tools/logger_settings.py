@@ -88,7 +88,7 @@ def _get_log_basename(script_name: str | None = None, now: datetime | None = Non
         return f'{current_time.strftime("%Y-%m-%dT%H%M%S")}.log'
 
     effective_script = script_name or os.getenv("SCRIPT_NAME") or Path.cwd().name
-    safe_script_name = Path(effective_script).name.replace("/", "_").replace("\\", "_")
+    safe_script_name = Path(effective_script).name.replace("\\", "_")
     return f"{safe_script_name}.log"
 
 
