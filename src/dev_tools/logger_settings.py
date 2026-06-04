@@ -17,6 +17,17 @@ from dotenv import load_dotenv
 from .debug_tools import is_debug_on
 
 
+def is_same_day_append_enabled() -> bool:
+    """Check if logs should append to a stable file within the active folder.
+
+    When enabled, repeated runs reuse the same basename instead of creating a
+    timestamped file for each startup. This works well with
+    ``TimedRotatingFileHandler`` because the handler can then rotate the active
+    file at midnight while same-day runs continue to append to the current file.
+    """
+    return os.getenv("LOGGER_APPEND_SAME_DAY", "False").lower() in ["true", "1", "t", "yes"]
+
+
 def is_logs_sorted_by_days() -> bool:
     """Check if logs should be sorted to a specific folder for each day"""
     return os.getenv("LOGGER_DAY_SPECIFIC", "False").lower() in ["true", "1", "t", "yes"]
@@ -70,6 +81,15 @@ def _get_logger_folder(script_name: str | None = None) -> str:
     return logger_folder_path
 
 
+def _get_log_basename(script_name: str | None = None) -> str:
+    """Return the log filename to use within the resolved log folder."""
+    if not is_same_day_append_enabled():
+        return f'{datetime.now().strftime("%Y-%m-%dT%H%M%S")}.log'
+
+    effective_script = script_name or os.getenv("SCRIPT_NAME") or Path.cwd().name
+    return f"{effective_script}.log"
+
+
 def logger_setup(script_name: str | None = None) -> None:
     """Set up logging configuration based on environment variables and debug mode.
     
@@ -77,23 +97,22 @@ def logger_setup(script_name: str | None = None) -> None:
         script_name: Optional script identifier for log folder separation.
                      If provided and LOGGER_SCRIPT_FOLDERS=True, logs go to:
                          {LOGGER_PATH}/{script_name}/{year}/{month}/{day}/
+                     If LOGGER_APPEND_SAME_DAY=True, repeated runs append to
+                     a stable basename in that folder instead of creating a
+                     new timestamped filename each run.
     """
     atexit.register(log_exit_code)
 
     # Loads up all the environment variables
     load_dotenv()
 
-    # Set SCRIPT_NAME env var if provided (for folder path and log identification)
-    if script_name:
-        os.environ["SCRIPT_NAME"] = script_name
+    effective_script = script_name or os.getenv("SCRIPT_NAME")
 
     debug = is_debug_on()
-    today = datetime.now()
-
     logger_conf_path = Path(os.getenv("LOGGER_CONF_PATH", "logging.conf"))
     if debug:
         logger_conf_path = Path(os.getenv("LOGGER_CONF_DEV_PATH", "logging_dev.conf"))
-    logger_path = _get_logger_folder(script_name)
+    logger_path = _get_logger_folder(effective_script)
 
     try:
         Path(logger_path).mkdir(parents=True, exist_ok=True)
@@ -104,7 +123,7 @@ def logger_setup(script_name: str | None = None) -> None:
         )
         raise e
 
-    logger_file_path = f'{logger_path}/{today.strftime("%Y-%m-%dT%H%M%S")}.log'
+    logger_file_path = f"{logger_path}/{_get_log_basename(effective_script)}"
     if logger_conf_path.exists():
         try:
             logging.config.fileConfig(
@@ -123,7 +142,7 @@ def logger_setup(script_name: str | None = None) -> None:
         logging.config.dictConfig(_default_logging_config(logger_file_path))
 
     logger = logging.getLogger(__name__)
-    logger.info("Setting up logger for %s", os.getenv("SCRIPT_NAME", Path.cwd().name))
+    logger.info("Setting up logger for %s", effective_script or Path.cwd().name)
 
 
 def _default_logging_config(logger_file_path: str) -> dict[str, object]:
@@ -156,10 +175,14 @@ def _default_logging_config(logger_file_path: str) -> dict[str, object]:
                 "stream": "ext://sys.stdout",
             },
             "file": {
-                "class": "logging.FileHandler",
+                "class": "logging.handlers.TimedRotatingFileHandler",
                 "formatter": "complex",
                 "level": "DEBUG" if is_debug_on() else "INFO",
                 "filename": logger_file_path,
+                "when": "midnight",
+                "interval": 1,
+                "backupCount": 5,
+                "encoding": "utf-8",
             },
         },
         "root": {

@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
 Log files are written to a structured folder hierarchy:
 
-```
+```text
 logs/
   2026/
     03/
@@ -91,10 +91,12 @@ logs/
 The folder path is controlled by environment variables:
 
 | Variable | Default | Description |
-|---|---|---|
+| -------- | ------- | ----------- |
 | `LOGGER_PATH` | `./logs` | Base log directory |
 | `LOGGER_DAY_SPECIFIC` | `False` | Add a day subfolder (zero-padded) |
 | `LOGGER_SCRIPT_FOLDERS` | `False` | Add a script-name subfolder before the year |
+| `LOGGER_APPEND_SAME_DAY` | `False` | Reuse one stable log file per folder instead of creating a new file each run |
+| `SCRIPT_NAME` | current working directory name | Identifier used for script-specific folders and stable same-day basenames |
 
 #### Logging Configuration File
 
@@ -105,8 +107,12 @@ The folder path is controlled by environment variables:
 
 If the config file is not found, a sensible **built-in default** is used automatically — no `.conf` file is required. The default configuration writes to both a file handler (all messages) and a console handler (warnings only; or all messages in debug mode).
 
+If `LOGGER_APPEND_SAME_DAY=True`, `logger_setup()` uses a stable basename such as `my_script.log` inside the resolved log folder so repeated runs append to the same file for that folder. This works best with the built-in timed rotation or the included `logging.conf` files.
+
+If you pass `script_name` directly to `logger_setup(script_name="my_etl_script")`, that value takes precedence for that call only. It does not overwrite the process `SCRIPT_NAME` environment variable for later logging setup calls.
+
 | Variable | Default | Description |
-|---|---|---|
+| -------- | ------- | ----------- |
 | `LOGGER_CONF_PATH` | `logging.conf` | Path to the logging config file |
 | `LOGGER_CONF_DEV_PATH` | `logging_dev.conf` | Path to the debug logging config file |
 | `DEBUG` | `False` | Enable debug mode (verbose console output) |

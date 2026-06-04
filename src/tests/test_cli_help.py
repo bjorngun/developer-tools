@@ -82,6 +82,7 @@ class TestMainOutput:
         assert "from dev_tools import" in output
         assert "@timing_decorator" in output
         assert "progress_bar" in output
+        assert 'CodeMapGenerator(src_root=Path("src"), package_name="my_package")' in output
 
     def test_all_flag(self):
         """--all should include every section."""
