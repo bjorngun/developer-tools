@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 import pytest
 from unittest.mock import patch
 from dev_tools.logger_settings import (
@@ -265,6 +266,13 @@ class TestGetLogBasename:
         result = _get_log_basename()
         assert result == "developer-tools.log"
 
+    def test_stable_name_sanitises_path_separators(self, monkeypatch):
+        """Should normalise script names to a safe basename."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+
+        result = _get_log_basename("../tmp/provisioning")
+        assert result == "provisioning.log"
+
 
 class TestLoggerSetupFileNaming:
     """Tests for logger_setup() filename selection."""
@@ -287,6 +295,29 @@ class TestLoggerSetupFileNaming:
         assert mock_file_config.call_args.kwargs["defaults"]["logfilename"].endswith(
             "provisioning.log"
         )
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    @patch("dev_tools.logger_settings.datetime")
+    def test_logger_setup_uses_single_timestamp_for_folder_and_filename(
+        self,
+        mock_datetime,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """Should use one captured time to avoid folder/filename day mismatch."""
+        monkeypatch.setenv("LOGGER_DAY_SPECIFIC", "True")
+        moment = datetime(2026, 1, 12, 23, 59, 59)
+        mock_datetime.now.return_value = moment
+
+        logger_setup()
+
+        filename = mock_file_config.call_args.kwargs["defaults"]["logfilename"]
+        assert "/2026/01/12/" in filename
+        assert filename.endswith("2026-01-12T235959.log")
 
 
 

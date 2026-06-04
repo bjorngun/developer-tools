@@ -52,7 +52,7 @@ def log_exit_code() -> None:
     logger.info("Exit code: %s", exit_code)
 
 
-def _get_logger_folder(script_name: str | None = None) -> str:
+def _get_logger_folder(script_name: str | None = None, now: datetime | None = None) -> str:
     """Get the logger folder path, optionally including script-specific subfolder.
     
     Args:
@@ -64,7 +64,7 @@ def _get_logger_folder(script_name: str | None = None) -> str:
         Full path to the log folder, e.g.:
             ./logs/provisioning/2026/01/07/
     """
-    today = datetime.now()
+    today = now or datetime.now()
     logger_path = os.getenv("LOGGER_PATH", "./logs")
 
     # Add script-specific subfolder if enabled
@@ -81,13 +81,15 @@ def _get_logger_folder(script_name: str | None = None) -> str:
     return logger_folder_path
 
 
-def _get_log_basename(script_name: str | None = None) -> str:
+def _get_log_basename(script_name: str | None = None, now: datetime | None = None) -> str:
     """Return the log filename to use within the resolved log folder."""
+    current_time = now or datetime.now()
     if not is_same_day_append_enabled():
-        return f'{datetime.now().strftime("%Y-%m-%dT%H%M%S")}.log'
+        return f'{current_time.strftime("%Y-%m-%dT%H%M%S")}.log'
 
     effective_script = script_name or os.getenv("SCRIPT_NAME") or Path.cwd().name
-    return f"{effective_script}.log"
+    safe_script_name = Path(effective_script).name.replace("/", "_").replace("\\", "_")
+    return f"{safe_script_name}.log"
 
 
 def logger_setup(script_name: str | None = None) -> None:
@@ -112,7 +114,8 @@ def logger_setup(script_name: str | None = None) -> None:
     logger_conf_path = Path(os.getenv("LOGGER_CONF_PATH", "logging.conf"))
     if debug:
         logger_conf_path = Path(os.getenv("LOGGER_CONF_DEV_PATH", "logging_dev.conf"))
-    logger_path = _get_logger_folder(effective_script)
+    current_time = datetime.now()
+    logger_path = _get_logger_folder(effective_script, now=current_time)
 
     try:
         Path(logger_path).mkdir(parents=True, exist_ok=True)
@@ -123,7 +126,7 @@ def logger_setup(script_name: str | None = None) -> None:
         )
         raise e
 
-    logger_file_path = f"{logger_path}/{_get_log_basename(effective_script)}"
+    logger_file_path = f"{logger_path}/{_get_log_basename(effective_script, now=current_time)}"
     if logger_conf_path.exists():
         try:
             logging.config.fileConfig(

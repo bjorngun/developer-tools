@@ -68,6 +68,7 @@ class TestMainOutput:
         assert "TIMING" in output
         assert "LOGGER_PATH" in output
         assert "LOGGER_DAY_SPECIFIC" in output
+        assert "does not mutate SCRIPT_NAME" in output
 
     def test_cli_flag(self):
         """--cli should show CLI tools."""
