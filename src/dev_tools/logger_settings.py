@@ -59,6 +59,8 @@ def _get_logger_folder(script_name: str | None = None, now: datetime | None = No
         script_name: Optional script name for folder separation.
                      If None and LOGGER_SCRIPT_FOLDERS is enabled, 
                      falls back to SCRIPT_NAME env var.
+        now: Optional pre-captured timestamp used to keep path/date
+             calculations consistent with filename generation.
     
     Returns:
         Full path to the log folder, e.g.:
@@ -82,13 +84,22 @@ def _get_logger_folder(script_name: str | None = None, now: datetime | None = No
 
 
 def _get_log_basename(script_name: str | None = None, now: datetime | None = None) -> str:
-    """Return the log filename to use within the resolved log folder."""
+    """Return the log filename to use within the resolved log folder.
+
+    Args:
+        script_name: Optional script name for stable same-day filenames.
+        now: Optional pre-captured timestamp for deterministic naming.
+
+    Returns:
+        A timestamped filename when LOGGER_APPEND_SAME_DAY is disabled,
+        otherwise a stable script-based basename.
+    """
     current_time = now or datetime.now()
     if not is_same_day_append_enabled():
         return f'{current_time.strftime("%Y-%m-%dT%H%M%S")}.log'
 
     effective_script = script_name or os.getenv("SCRIPT_NAME") or Path.cwd().name
-    safe_script_name = Path(effective_script).name.replace("\\", "_")
+    safe_script_name = Path(effective_script).name.replace("/", "_").replace("\\", "_")
     return f"{safe_script_name}.log"
 
 
