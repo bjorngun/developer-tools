@@ -1,5 +1,7 @@
 # Changelog
 
+<!-- markdownlint-disable MD024 -->
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -27,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `progress_bar` type hint changed from `Iterable` to `Collection` to accurately reflect `len()` requirement.
 - Removed duplicate `LOGGER_DAY_SPECIFIC` table row from README.
 - PR merges now publish to PyPI via release-triggered `publish.yml` workflow.
+- `logger_setup(script_name=...)` no longer overwrites `SCRIPT_NAME` for later calls in the same process.
+- Corrected the `dev-tools` help example for `CodeMapGenerator` to show the required constructor arguments.
 
 ## [1.0.0] - 2026-03-03
 

@@ -85,7 +85,10 @@ LOGGER_CONF_PATH        logging.conf      Path to logging config file.
 LOGGER_CONF_DEV_PATH    logging_dev.conf  Path to dev logging config.
 LOGGER_DAY_SPECIFIC     False       Add day-level subfolder to log path.
 LOGGER_SCRIPT_FOLDERS   False       Add script-name subfolder to log path.
+LOGGER_APPEND_SAME_DAY  False       Append repeated runs to one stable file per log folder.
 SCRIPT_NAME             (cwd name)  Identifier used in log entries.
+                                    logger_setup(script_name=...) is call-scoped
+                                    and does not mutate SCRIPT_NAME.
 
 Set variables in a .env file (python-dotenv) or export them.
 """
@@ -152,7 +155,7 @@ for r in result.results:
 # 6. Generate code map (library)
 from dev_tools import CodeMapGenerator
 
-gen = CodeMapGenerator()
+gen = CodeMapGenerator(src_root=Path("src"), package_name="my_package")
 # see codemap-generator --help for CLI usage
 """
 

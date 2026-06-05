@@ -1,13 +1,16 @@
 import logging
 import os
+from datetime import datetime
 import pytest
 from unittest.mock import patch
 from dev_tools.logger_settings import (
     logger_setup,
     is_script_folders_enabled,
     is_logs_sorted_by_days,
+    is_same_day_append_enabled,
     log_exit_code,
     _get_logger_folder,
+    _get_log_basename,
     _default_logging_config,
 )
 
@@ -50,7 +53,13 @@ class TestIsScriptFoldersEnabled:
 @pytest.fixture
 def _clean_logger_env(monkeypatch):
     """Remove logger-related env vars so each test starts clean."""
-    for key in ["LOGGER_PATH", "LOGGER_SCRIPT_FOLDERS", "LOGGER_DAY_SPECIFIC", "SCRIPT_NAME"]:
+    for key in [
+        "LOGGER_PATH",
+        "LOGGER_SCRIPT_FOLDERS",
+        "LOGGER_DAY_SPECIFIC",
+        "LOGGER_APPEND_SAME_DAY",
+        "SCRIPT_NAME",
+    ]:
         monkeypatch.delenv(key, raising=False)
 
 
@@ -148,13 +157,20 @@ class TestGetLoggerFolder:
 class TestLoggerSetupScriptName:
     """Tests for logger_setup() with script_name parameter."""
 
+    @patch("dev_tools.logger_settings.load_dotenv")
     @patch("dev_tools.logger_settings.logging.config.dictConfig")
     @patch("dev_tools.logger_settings.Path.exists", return_value=False)
-    def test_script_name_sets_env_var(self, _mock_exists, _mock_dictConfig, monkeypatch):
-        """Should set SCRIPT_NAME env var when param provided."""
-        monkeypatch.delenv("SCRIPT_NAME", raising=False)
+    def test_script_name_does_not_mutate_env_var(
+        self,
+        _mock_exists,
+        _mock_dictConfig,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """Should not overwrite the caller's existing SCRIPT_NAME env var."""
+        monkeypatch.setenv("SCRIPT_NAME", "existing_script")
         logger_setup(script_name="test_script")
-        assert os.environ.get("SCRIPT_NAME") == "test_script"
+        assert os.environ.get("SCRIPT_NAME") == "existing_script"
 
     @patch("dev_tools.logger_settings.logging.config.dictConfig")
     @patch("dev_tools.logger_settings.Path.exists", return_value=False)
@@ -170,6 +186,139 @@ class TestLoggerSetupScriptName:
         """Should work without any arguments (backwards compatibility)."""
         logger_setup()
         mock_dictConfig.assert_called_once()
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    def test_second_call_without_script_name_does_not_reuse_prior_value(
+        self,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """A prior explicit script_name should not bleed into later calls."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+        monkeypatch.delenv("SCRIPT_NAME", raising=False)
+
+        logger_setup(script_name="first_script")
+        logger_setup()
+
+        second_call = mock_file_config.call_args_list[1]
+        filename = second_call.kwargs["defaults"]["logfilename"]
+        assert filename.endswith("developer-tools.log")
+
+
+class TestIsSameDayAppendEnabled:
+    """Tests for is_same_day_append_enabled() function."""
+
+    def test_default_is_false(self, monkeypatch):
+        """Should return False when LOGGER_APPEND_SAME_DAY is not set."""
+        monkeypatch.delenv("LOGGER_APPEND_SAME_DAY", raising=False)
+        assert is_same_day_append_enabled() is False
+
+    @pytest.mark.parametrize("value", ["true", "True", "TRUE", "1", "t", "yes", "Yes"])
+    def test_true_values(self, value, monkeypatch):
+        """Should return True for truthy string values."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", value)
+        assert is_same_day_append_enabled() is True
+
+    @pytest.mark.parametrize("value", ["false", "False", "0", "no", "random"])
+    def test_false_values(self, value, monkeypatch):
+        """Should return False for falsy or unrecognised string values."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", value)
+        assert is_same_day_append_enabled() is False
+
+
+@pytest.mark.usefixtures("_clean_logger_env")
+class TestGetLogBasename:
+    """Tests for _get_log_basename() function."""
+
+    @patch("dev_tools.logger_settings.datetime")
+    def test_timestamped_name_by_default(self, mock_datetime):
+        """Should keep per-run timestamped filenames by default."""
+        mock_datetime.now.return_value.strftime.return_value = "2026-01-12T101112"
+
+        result = _get_log_basename()
+        assert result == "2026-01-12T101112.log"
+
+    def test_stable_name_uses_script_name_param(self, monkeypatch):
+        """Should use the script name when same-day append is enabled."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+
+        result = _get_log_basename("provisioning")
+        assert result == "provisioning.log"
+
+    def test_stable_name_uses_script_name_env(self, monkeypatch):
+        """Should fall back to SCRIPT_NAME when provided via environment."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+        monkeypatch.setenv("SCRIPT_NAME", "sync")
+
+        result = _get_log_basename()
+        assert result == "sync.log"
+
+    @patch("dev_tools.logger_settings.Path.cwd")
+    def test_stable_name_falls_back_to_cwd(self, mock_cwd, monkeypatch):
+        """Should fall back to the current working directory name."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+        mock_cwd.return_value.name = "developer-tools"
+
+        result = _get_log_basename()
+        assert result == "developer-tools.log"
+
+    def test_stable_name_sanitises_path_separators(self, monkeypatch):
+        """Should normalise script names to a safe basename."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+
+        result = _get_log_basename("../tmp/provisioning")
+        assert result == "provisioning.log"
+
+
+class TestLoggerSetupFileNaming:
+    """Tests for logger_setup() filename selection."""
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    def test_same_day_append_uses_stable_basename(
+        self,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """Should pass a stable basename to fileConfig when enabled."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+
+        logger_setup(script_name="provisioning")
+
+        assert mock_file_config.call_args.kwargs["defaults"]["logfilename"].endswith(
+            "provisioning.log"
+        )
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    @patch("dev_tools.logger_settings.datetime")
+    def test_logger_setup_uses_single_timestamp_for_folder_and_filename(
+        self,
+        mock_datetime,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """Should use one captured time to avoid folder/filename day mismatch."""
+        monkeypatch.setenv("LOGGER_DAY_SPECIFIC", "True")
+        moment = datetime(2026, 1, 12, 23, 59, 59)
+        mock_datetime.now.return_value = moment
+
+        logger_setup()
+
+        filename = mock_file_config.call_args.kwargs["defaults"]["logfilename"]
+        assert "/2026/01/12/" in filename
+        assert filename.endswith("2026-01-12T235959.log")
+
 
 
 # ===================================================================
@@ -295,6 +444,9 @@ class TestDefaultLoggingConfig:
         assert "handlers" in config
         assert "root" in config
         assert config["handlers"]["file"]["filename"] == "/tmp/test.log"
+        assert config["handlers"]["file"]["class"] == "logging.handlers.TimedRotatingFileHandler"
+        assert config["handlers"]["file"]["when"] == "midnight"
+        assert config["handlers"]["file"]["backupCount"] == 5
 
     @patch("dev_tools.logger_settings.is_debug_on", return_value=True)
     def test_debug_mode_levels(self, _mock_debug):
