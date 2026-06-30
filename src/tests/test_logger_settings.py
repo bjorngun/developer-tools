@@ -402,12 +402,14 @@ class TestParameterOverrides:
 
     @patch("dev_tools.logger_settings.load_dotenv")
     @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.mkdir")
     @patch("dev_tools.logger_settings.Path.exists", return_value=True)
     @patch("dev_tools.logger_settings.datetime")
     def test_logger_setup_path_params_without_env(
         self,
         mock_datetime,
         _mock_exists,
+        _mock_mkdir,
         mock_file_config,
         _mock_load_dotenv,
         monkeypatch,
