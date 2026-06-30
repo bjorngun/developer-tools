@@ -208,6 +208,18 @@ codemap-generator --package my_package
 python -m dev_tools.codemap_generator --package my_package --output-dir docs
 ```
 
+## Releasing
+
+Releases are automated and triggered **only by merging a pull request into `main`**. The version bump follows [Semantic Versioning](https://semver.org/) and is chosen by **PR label**:
+
+| PR label | Bump | Example |
+| -------- | ---- | ------- |
+| _(none)_ | patch (default) | `1.2.3 → 1.2.4` |
+| `release:minor` | minor | `1.2.3 → 1.3.0` |
+| `release:major` | major | `1.2.3 → 2.0.0` |
+
+On merge, the `Version & Release` workflow bumps the version in `pyproject.toml`, moves the `[Unreleased]` changelog entries under the new version heading, publishes to PyPI, and creates a matching GitHub Release. To release a minor or major version, add the corresponding label to the PR **before** merging.
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/bjorngun/developer-tools/blob/main/LICENSE) file for more details.

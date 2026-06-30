@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Release workflow now triggers solely on PR merge (removed the duplicate `push`-to-`main` trigger that caused two release runs to race). Version bump size is selected by PR label: none → patch (default), `release:minor` → minor, `release:major` → major.
+
+### Fixed
+
+- PyPI publish step is now idempotent (`twine upload --skip-existing`) and the release job no longer fails with a `400 Bad Request` when a version was already uploaded by a concurrent run.
+- GitHub Release creation now uses the `gh` CLI instead of a third-party action (removes the Node 20 deprecation warning) and no longer depends on a `pr-description` artifact that could be missing.
+
+## [1.2.1] - 2026-06-30
+
+### Added
+
+- README section documenting exit-code and unhandled-exception logging behavior.
+- README guide for switching from a file-per-run to a single log per day, plus an argument/env-var reference table.
+- `logger_setup()` keyword arguments `logger_path`, `script_folders`, `day_specific`, and `append_same_day` that mirror the `LOGGER_*` environment variables (arguments take precedence; `None` falls back to the env var).
+- Optional `override` argument on `is_same_day_append_enabled()`, `is_logs_sorted_by_days()`, and `is_script_folders_enabled()`.
+- Tests for the uncaught-exception hook installed by `logger_setup()`.
+- Tests for the new `logger_setup()` keyword arguments and helper overrides.
+
+### Changed
+
+- `logger_setup()` docstring now documents the complete `LOGGER_*` environment-variable contract and a single-log-per-day recipe, so consuming agents/tools can discover the behavior from the installed package.
+
+### Fixed
+
+- `log_exit_code()` now reports a truthful non-zero exit code and logs the traceback when a script ends with an unhandled exception, instead of always logging `Exit code: 0` (the old check read `sys.exc_info()` at `atexit` time, after the exception had been cleared). The default `stderr` traceback is preserved.
+
 ## [1.2.0] - 2026-06-05
 
 ### Added
@@ -17,19 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `__version__` attribute accessible via `from dev_tools import __version__`.
 - `Homepage` URL in PyPI project metadata.
 - README documentation for logging configuration file discovery and fallback behavior.
-- README section documenting exit-code and unhandled-exception logging behavior.
-- README guide for switching from a file-per-run to a single log per day, plus an argument/env-var reference table.
-- `logger_setup()` keyword arguments `logger_path`, `script_folders`, `day_specific`, and `append_same_day` that mirror the `LOGGER_*` environment variables (arguments take precedence; `None` falls back to the env var).
-- Optional `override` argument on `is_same_day_append_enabled()`, `is_logs_sorted_by_days()`, and `is_script_folders_enabled()`.
 - Subprocess tests for `python -m dev_tools.md_link_checker` and `python -m dev_tools.codemap_generator` entry points.
 - Tests for `is_logs_sorted_by_days()`, `log_exit_code()`, error paths in `logger_setup()`, debug-mode branch, and `_default_logging_config()` return values.
-- Tests for the uncaught-exception hook installed by `logger_setup()`.
-- Tests for the new `logger_setup()` keyword arguments and helper overrides.
 
 ### Changed
 
 - **Breaking:** `timing_decorator` no longer prints elapsed time by default; requires `TIMING=True` env var.
-- `logger_setup()` docstring now documents the complete `LOGGER_*` environment-variable contract and a single-log-per-day recipe, so consuming agents/tools can discover the behavior from the installed package.
 - Publish job extracted from `version.yml` to separate `publish.yml` workflow.
 - CI test matrix expanded to run all Python versions (3.10–3.14) on both Windows and Ubuntu, plus macOS with Python 3.12.
 
@@ -40,7 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PR merges now publish to PyPI via release-triggered `publish.yml` workflow.
 - `logger_setup(script_name=...)` no longer overwrites `SCRIPT_NAME` for later calls in the same process.
 - Corrected the `dev-tools` help example for `CodeMapGenerator` to show the required constructor arguments.
-- `log_exit_code()` now reports a truthful non-zero exit code and logs the traceback when a script ends with an unhandled exception, instead of always logging `Exit code: 0` (the old check read `sys.exc_info()` at `atexit` time, after the exception had been cleared). The default `stderr` traceback is preserved.
 
 ## [1.0.0] - 2026-03-03
 
