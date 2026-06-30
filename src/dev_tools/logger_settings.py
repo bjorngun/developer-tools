@@ -12,6 +12,7 @@ import logging.config
 import os
 import sys
 from pathlib import Path
+from types import TracebackType
 from dotenv import load_dotenv
 
 from .debug_tools import is_debug_on
@@ -69,7 +70,11 @@ def is_script_folders_enabled(override: bool | None = None) -> bool:
     return os.getenv("LOGGER_SCRIPT_FOLDERS", "False").lower() in ["true", "1", "t", "yes"]
 
 
-def _log_uncaught_exception(exc_type, exc_value, exc_traceback) -> None:
+def _log_uncaught_exception(
+    exc_type: type[BaseException],
+    exc_value: BaseException,
+    exc_traceback: TracebackType | None,
+) -> None:
     """Record a non-zero exit status and log an uncaught exception's traceback.
 
     Installed as :data:`sys.excepthook` by :func:`logger_setup`. Capturing the
@@ -78,8 +83,11 @@ def _log_uncaught_exception(exc_type, exc_value, exc_traceback) -> None:
     the configured logging handlers and that :func:`log_exit_code` reports a
     truthful, non-zero exit code.
 
-    ``KeyboardInterrupt`` is delegated to the default hook so Ctrl-C does not
-    produce a noisy traceback, while still being recorded as a non-zero exit.
+    After logging, the default :data:`sys.__excepthook__` is invoked so the
+    standard stderr traceback is preserved (i.e. this hook augments rather than
+    replaces the default behavior). ``KeyboardInterrupt`` is delegated straight
+    to the default hook so Ctrl-C does not produce a noisy logged traceback,
+    while still being recorded as a non-zero exit.
     """
     _exit_state["status"] = 1
     if issubclass(exc_type, KeyboardInterrupt):
@@ -89,13 +97,17 @@ def _log_uncaught_exception(exc_type, exc_value, exc_traceback) -> None:
     logger.critical(
         "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
     )
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
 def log_exit_code() -> None:
-    """Log the exit code of the script.
+    """Log the exit status recorded for the run.
 
-    Reads the status recorded by :func:`_log_uncaught_exception` so that runs
-    ending in an unhandled exception are logged with a non-zero exit code.
+    Logs ``1`` when :func:`_log_uncaught_exception` recorded an unhandled
+    exception during the run, otherwise ``0``. This reflects the
+    *uncaught-exception* status only: explicit ``sys.exit(N)`` / ``SystemExit``
+    codes are not captured here, because :data:`sys.excepthook` is not invoked
+    for ``SystemExit``.
     """
     logger = logging.getLogger(__name__)
     logger.info("Exit code: %s", _exit_state["status"])

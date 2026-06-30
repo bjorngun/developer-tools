@@ -483,31 +483,36 @@ class TestLogExitCode:
             raise ValueError("test error")
         except ValueError:
             exc = sys.exc_info()
-        _log_uncaught_exception(*exc)
+        with patch("dev_tools.logger_settings.sys.__excepthook__"):
+            _log_uncaught_exception(*exc)
         with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
             log_exit_code()
         assert "Exit code: 1" in caplog.text
 
     def test_excepthook_sets_status_and_logs_traceback(self, caplog):
-        """The excepthook should record status 1 and log the traceback."""
+        """The excepthook should record status 1, log, and chain to default."""
         try:
             raise RuntimeError("boom")
         except RuntimeError:
             exc = sys.exc_info()
-        with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
-            _log_uncaught_exception(*exc)
+        with patch("dev_tools.logger_settings.sys.__excepthook__") as mock_default:
+            with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
+                _log_uncaught_exception(*exc)
+            mock_default.assert_called_once_with(*exc)
         assert _exit_state["status"] == 1
         assert "Uncaught exception" in caplog.text
         assert "RuntimeError: boom" in caplog.text
 
     def test_keyboardinterrupt_records_status_without_logging(self, caplog):
-        """KeyboardInterrupt should set status 1 but not log a traceback."""
+        """KeyboardInterrupt should set status 1, skip logging, chain to default."""
         try:
             raise KeyboardInterrupt()
         except KeyboardInterrupt:
             exc = sys.exc_info()
-        with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
-            _log_uncaught_exception(*exc)
+        with patch("dev_tools.logger_settings.sys.__excepthook__") as mock_default:
+            with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
+                _log_uncaught_exception(*exc)
+            mock_default.assert_called_once_with(*exc)
         assert _exit_state["status"] == 1
         assert "Uncaught exception" not in caplog.text
 

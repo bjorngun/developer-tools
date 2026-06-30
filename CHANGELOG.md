@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PR merges now publish to PyPI via release-triggered `publish.yml` workflow.
 - `logger_setup(script_name=...)` no longer overwrites `SCRIPT_NAME` for later calls in the same process.
 - Corrected the `dev-tools` help example for `CodeMapGenerator` to show the required constructor arguments.
-- `log_exit_code()` now reports a truthful non-zero exit code and logs the traceback when a script ends with an unhandled exception, instead of always logging `Exit code: 0` (the old check read `sys.exc_info()` at `atexit` time, after the exception had been cleared).
+- `log_exit_code()` now reports a truthful non-zero exit code and logs the traceback when a script ends with an unhandled exception, instead of always logging `Exit code: 0` (the old check read `sys.exc_info()` at `atexit` time, after the exception had been cleared). The default `stderr` traceback is preserved.
 
 ## [1.0.0] - 2026-03-03
 

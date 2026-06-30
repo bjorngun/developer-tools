@@ -147,7 +147,7 @@ Same-day runs then append to a stable file such as `logs/2026/03/my_etl.log`. Wi
 `logger_setup()` installs a `sys.excepthook` and an `atexit` handler so the final log line reflects the real outcome of the run:
 
 - On a clean run, the log ends with `Exit code: 0`.
-- If the script terminates with an unhandled exception, the full traceback is logged (level `CRITICAL`) and the log ends with `Exit code: 1`, matching the non-zero process exit status. `KeyboardInterrupt` is recorded as a non-zero exit without logging a traceback.
+- If the script terminates with an unhandled exception, the full traceback is logged (level `CRITICAL`) and the log ends with `Exit code: 1`, matching the non-zero process exit status. The standard Python traceback is still printed to `stderr` (the hook augments, it does not replace, the default behavior). `KeyboardInterrupt` is recorded as a non-zero exit without logging a traceback.
 
 This means a failed run can be identified directly from the log file instead of relying on an external scheduler to report the exit status.
 
