@@ -3,9 +3,9 @@ name: Version & Release
 # Releases are driven solely by merging a pull request into main.
 #
 # Version bump size (semantic versioning) is chosen by PR label:
-#   * (no label)      -> patch bump   0.0.X+1   (default)
-#   * release:minor   -> minor bump   0.X+1.0
-#   * release:major   -> major bump   X+1.0.0
+#   * (no label)      -> patch bump   X.Y.Z -> X.Y.(Z+1)   (default)
+#   * release:minor   -> minor bump   X.Y.Z -> X.(Y+1).0
+#   * release:major   -> major bump   X.Y.Z -> (X+1).0.0
 #
 # A single trigger (pull_request: closed) plus a workflow-level concurrency
 # group guarantees that two runs can never race to bump/publish the same
