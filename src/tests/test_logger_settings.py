@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from datetime import datetime
 import pytest
 from unittest.mock import patch
@@ -9,6 +10,8 @@ from dev_tools.logger_settings import (
     is_logs_sorted_by_days,
     is_same_day_append_enabled,
     log_exit_code,
+    _log_uncaught_exception,
+    _exit_state,
     _get_logger_folder,
     _get_log_basename,
     _default_logging_config,
@@ -353,23 +356,66 @@ class TestIsLogsSortedByDays:
 
 
 class TestLogExitCode:
-    """Tests for log_exit_code() function."""
+    """Tests for log_exit_code() and the uncaught-exception hook."""
 
-    def test_logs_zero_when_no_exception(self, caplog):
-        """Should log exit code 0 when no active exception."""
+    @pytest.fixture(autouse=True)
+    def _reset_exit_state(self):
+        """Reset the shared exit status before and after each test."""
+        _exit_state["status"] = 0
+        yield
+        _exit_state["status"] = 0
+
+    def test_logs_zero_by_default(self, caplog):
+        """Should log exit code 0 when no failure was recorded."""
         with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
             log_exit_code()
         assert "Exit code: 0" in caplog.text
 
-    def test_logs_one_when_exception_active(self, caplog):
-        """Should log exit code 1 when an unhandled exception is active."""
+    def test_logs_one_after_uncaught_exception(self, caplog):
+        """Should log exit code 1 after the excepthook records a failure."""
         try:
             raise ValueError("test error")
         except ValueError:
-            # sys.exc_info() is non-None inside the except block
-            with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
-                log_exit_code()
+            exc = sys.exc_info()
+        _log_uncaught_exception(*exc)
+        with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
+            log_exit_code()
         assert "Exit code: 1" in caplog.text
+
+    def test_excepthook_sets_status_and_logs_traceback(self, caplog):
+        """The excepthook should record status 1 and log the traceback."""
+        try:
+            raise RuntimeError("boom")
+        except RuntimeError:
+            exc = sys.exc_info()
+        with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
+            _log_uncaught_exception(*exc)
+        assert _exit_state["status"] == 1
+        assert "Uncaught exception" in caplog.text
+        assert "RuntimeError: boom" in caplog.text
+
+    def test_keyboardinterrupt_records_status_without_logging(self, caplog):
+        """KeyboardInterrupt should set status 1 but not log a traceback."""
+        try:
+            raise KeyboardInterrupt()
+        except KeyboardInterrupt:
+            exc = sys.exc_info()
+        with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
+            _log_uncaught_exception(*exc)
+        assert _exit_state["status"] == 1
+        assert "Uncaught exception" not in caplog.text
+
+    @patch("dev_tools.logger_settings.logging.config.dictConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=False)
+    def test_logger_setup_installs_excepthook(self, _mock_exists, _mock_dictConfig):
+        """logger_setup() should install the uncaught-exception hook."""
+        original = sys.excepthook
+        try:
+            logger_setup()
+            assert sys.excepthook is _log_uncaught_exception
+        finally:
+            sys.excepthook = original
+
 
 
 # ===================================================================

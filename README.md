@@ -111,6 +111,15 @@ If `LOGGER_APPEND_SAME_DAY=True`, `logger_setup()` uses a stable basename such a
 
 If you pass `script_name` directly to `logger_setup(script_name="my_etl_script")`, that value takes precedence for that call only. It does not overwrite the process `SCRIPT_NAME` environment variable for later logging setup calls.
 
+#### Exit Code and Unhandled Exceptions
+
+`logger_setup()` installs a `sys.excepthook` and an `atexit` handler so the final log line reflects the real outcome of the run:
+
+- On a clean run, the log ends with `Exit code: 0`.
+- If the script terminates with an unhandled exception, the full traceback is logged (level `CRITICAL`) and the log ends with `Exit code: 1`, matching the non-zero process exit status. `KeyboardInterrupt` is recorded as a non-zero exit without logging a traceback.
+
+This means a failed run can be identified directly from the log file instead of relying on an external scheduler to report the exit status.
+
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
 | `LOGGER_CONF_PATH` | `logging.conf` | Path to the logging config file |

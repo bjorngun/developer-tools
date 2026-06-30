@@ -17,8 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `__version__` attribute accessible via `from dev_tools import __version__`.
 - `Homepage` URL in PyPI project metadata.
 - README documentation for logging configuration file discovery and fallback behavior.
+- README section documenting exit-code and unhandled-exception logging behavior.
 - Subprocess tests for `python -m dev_tools.md_link_checker` and `python -m dev_tools.codemap_generator` entry points.
 - Tests for `is_logs_sorted_by_days()`, `log_exit_code()`, error paths in `logger_setup()`, debug-mode branch, and `_default_logging_config()` return values.
+- Tests for the uncaught-exception hook installed by `logger_setup()`.
 
 ### Changed
 
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PR merges now publish to PyPI via release-triggered `publish.yml` workflow.
 - `logger_setup(script_name=...)` no longer overwrites `SCRIPT_NAME` for later calls in the same process.
 - Corrected the `dev-tools` help example for `CodeMapGenerator` to show the required constructor arguments.
+- `log_exit_code()` now reports a truthful non-zero exit code and logs the traceback when a script ends with an unhandled exception, instead of always logging `Exit code: 0` (the old check read `sys.exc_info()` at `atexit` time, after the exception had been cleared).
 
 ## [1.0.0] - 2026-03-03
 

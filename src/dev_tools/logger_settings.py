@@ -16,6 +16,11 @@ from dotenv import load_dotenv
 
 from .debug_tools import is_debug_on
 
+# Mutable module-level holder for the process exit status. A dict is used (instead
+# of a bare module global with the ``global`` statement) so the excepthook can
+# record a non-zero status that ``log_exit_code`` reads at interpreter shutdown.
+_exit_state: dict[str, int] = {"status": 0}
+
 
 def is_same_day_append_enabled() -> bool:
     """Check if logs should append to a stable file within the active folder.
@@ -45,11 +50,36 @@ def is_script_folders_enabled() -> bool:
     return os.getenv("LOGGER_SCRIPT_FOLDERS", "False").lower() in ["true", "1", "t", "yes"]
 
 
-def log_exit_code() -> None:
-    """Log the exit code of the script."""
+def _log_uncaught_exception(exc_type, exc_value, exc_traceback) -> None:
+    """Record a non-zero exit status and log an uncaught exception's traceback.
+
+    Installed as :data:`sys.excepthook` by :func:`logger_setup`. Capturing the
+    failure here (rather than inspecting :func:`sys.exc_info` at ``atexit`` time,
+    when the exception has already been cleared) ensures the traceback reaches
+    the configured logging handlers and that :func:`log_exit_code` reports a
+    truthful, non-zero exit code.
+
+    ``KeyboardInterrupt`` is delegated to the default hook so Ctrl-C does not
+    produce a noisy traceback, while still being recorded as a non-zero exit.
+    """
+    _exit_state["status"] = 1
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
     logger = logging.getLogger(__name__)
-    exit_code = 0 if sys.exc_info() == (None, None, None) else 1
-    logger.info("Exit code: %s", exit_code)
+    logger.critical(
+        "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
+    )
+
+
+def log_exit_code() -> None:
+    """Log the exit code of the script.
+
+    Reads the status recorded by :func:`_log_uncaught_exception` so that runs
+    ending in an unhandled exception are logged with a non-zero exit code.
+    """
+    logger = logging.getLogger(__name__)
+    logger.info("Exit code: %s", _exit_state["status"])
 
 
 def _get_logger_folder(script_name: str | None = None, now: datetime | None = None) -> str:
@@ -114,7 +144,11 @@ def logger_setup(script_name: str | None = None) -> None:
                      a stable basename in that folder instead of creating a
                      new timestamped filename each run.
     """
-    atexit.register(log_exit_code)
+    # Install the exit handlers once. The excepthook records unhandled
+    # exceptions so the exit code logged at shutdown reflects real failures.
+    if sys.excepthook is not _log_uncaught_exception:
+        sys.excepthook = _log_uncaught_exception
+        atexit.register(log_exit_code)
 
     # Loads up all the environment variables
     load_dotenv()
