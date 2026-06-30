@@ -1,8 +1,17 @@
 name: Version & Release
 
+# Releases are driven solely by merging a pull request into main.
+#
+# Version bump size (semantic versioning) is chosen by PR label:
+#   * (no label)      -> patch bump   0.0.X+1   (default)
+#   * release:minor   -> minor bump   0.X+1.0
+#   * release:major   -> major bump   X+1.0.0
+#
+# A single trigger (pull_request: closed) plus a workflow-level concurrency
+# group guarantees that two runs can never race to bump/publish the same
+# version (the previous push + pull_request dual-trigger caused that race).
+
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
     types: [closed]
@@ -11,272 +20,188 @@ permissions:
   contents: write
   pull-requests: read
 
+# Serialize releases for this repo so bump/publish steps never overlap.
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   version-bump:
     name: Bump Version
     runs-on: ubuntu-latest
-    # Only run on direct pushes (not PR merges) OR merged PRs (not closed without merge)
-    if: >-
-      github.event_name == 'push'
-      || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    # Prevent concurrent version bumps - queue them instead of running in parallel
-    concurrency:
-      group: version-bump-${{ github.repository }}
-      cancel-in-progress: false
+    # Only run when a PR is actually merged (not merely closed without merging).
+    if: github.event.pull_request.merged == true
 
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version || steps.manual-check.outputs.new_version }}
+      new_version: ${{ steps.finalize.outputs.new_version }}
       bump_type: ${{ steps.determine-bump.outputs.bump_type }}
-      pr_body: ${{ steps.pr-info.outputs.pr_body }}
-      pr_title: ${{ steps.pr-info.outputs.pr_title }}
-      is_pr_merge: ${{ steps.pr-merge-check.outputs.is_pr_merge }}
 
     steps:
-      - name: Check if push is from a PR merge
-        id: pr-merge-check
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Use GitHub API to check if this push commit is associated with a merged PR.
-          # This works regardless of merge strategy (merge commit, squash, rebase).
-          PR_COUNT=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
-            | jq 'length')
-          if [ "$PR_COUNT" -gt "0" ]; then
-            echo "Push is from a PR merge — skipping (handled by pull_request event)"
-            echo "is_pr_merge=true" >> $GITHUB_OUTPUT
-          else
-            echo "Push is a direct commit — proceeding with patch bump"
-            echo "is_pr_merge=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Checkout code
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true'
         uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync with latest main
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true'
         run: |
-          # For merged PRs, the checkout gets the merge commit which may not have
-          # the latest version bump commits. Pull to ensure we read the current version.
           git fetch origin main
           git reset --hard origin/main
           echo "Synced to latest main: $(git rev-parse HEAD)"
 
-      - name: Check for manual version change
-        id: manual-check
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true'
-        run: |
-          # Compare the version field in pyproject.toml between this commit and its parent.
-          # If the version was already changed manually, skip the automatic bump.
-          CURRENT_VERSION=$(grep -oP '(?<=^version = ")[^"]+' pyproject.toml || echo "")
-          PARENT_VERSION=$(git show HEAD~1:pyproject.toml 2>/dev/null | grep -oP '(?<=^version = ")[^"]+' || echo "")
-
-          echo "Current version: $CURRENT_VERSION"
-          echo "Parent version:  $PARENT_VERSION"
-
-          if [ "$CURRENT_VERSION" != "$PARENT_VERSION" ] && [ -n "$PARENT_VERSION" ]; then
-            echo "Version was manually changed ($PARENT_VERSION -> $CURRENT_VERSION). Skipping automatic bump."
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up Python
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true'
         uses: actions/setup-python@v6.2.0
         with:
           python-version: '3.12'
 
       - name: Install toml package
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true'
         run: pip install toml
 
-      - name: Capture PR information
-        id: pr-info
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true' && github.event_name == 'pull_request'
-        run: |
-          # Save PR body to file (handles multiline)
-          cat << 'PRBODYEOF' > pr_body.md
-          ${{ github.event.pull_request.body }}
-          PRBODYEOF
-
-          # Output PR title
-          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
-
-          # For the body, we need to escape it for output
-          # Save to artifact instead of output (handles multiline better)
-          echo "pr_body_file=pr_body.md" >> $GITHUB_OUTPUT
-
-      - name: Upload PR body as artifact
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true' && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7.0.0
-        with:
-          name: pr-description
-          path: pr_body.md
-          retention-days: 1
-
-      - name: Determine bump type
+      - name: Determine bump type from PR labels
         id: determine-bump
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true'
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # PR merged = minor bump (Y)
-            echo "bump_type=minor" >> $GITHUB_OUTPUT
-            echo "Bump type: MINOR (PR merged)"
+          # Default is a patch bump. A label overrides it.
+          if printf ',%s,' "$LABELS" | grep -q ',release:major,'; then
+            BUMP=major
+          elif printf ',%s,' "$LABELS" | grep -q ',release:minor,'; then
+            BUMP=minor
           else
-            # Direct push = patch bump (Z)
-            echo "bump_type=patch" >> $GITHUB_OUTPUT
-            echo "Bump type: PATCH (direct push)"
+            BUMP=patch
           fi
+          echo "bump_type=$BUMP" >> "$GITHUB_OUTPUT"
+          echo "Bump type: $BUMP (labels: ${LABELS:-none})"
 
       - name: Bump version in pyproject.toml
         id: bump
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true'
+        env:
+          BUMP_TYPE: ${{ steps.determine-bump.outputs.bump_type }}
         run: |
           python << 'EOF'
-          import toml
           import os
+          import re
+          import subprocess
+          import toml
 
-          bump_type = "${{ steps.determine-bump.outputs.bump_type }}"
+          bump_type = os.environ["BUMP_TYPE"]
 
-          # Read current version
-          with open('pyproject.toml', 'r') as f:
+          with open("pyproject.toml") as f:
               config = toml.load(f)
+          current = config["project"]["version"]
 
-          current_version = config['project']['version']
-          major, minor, patch = map(int, current_version.split('.'))
+          # Detect a manual version change already made inside the merged PR.
+          parent = subprocess.run(
+              ["git", "show", "HEAD~1:pyproject.toml"],
+              capture_output=True, text=True,
+          ).stdout
+          m = re.search(r'(?m)^version = "([^"]+)"', parent)
+          parent_version = m.group(1) if m else ""
 
-          # Bump version based on type
-          if bump_type == 'minor':
-              minor += 1
-              patch = 0  # Reset patch on minor bump
-          else:  # patch
-              patch += 1
+          if parent_version and parent_version != current:
+              new_version = current
+              print(f"Version already changed in PR ({parent_version} -> {current}); skipping auto-bump.")
+          else:
+              major, minor, patch = map(int, current.split("."))
+              if bump_type == "major":
+                  major, minor, patch = major + 1, 0, 0
+              elif bump_type == "minor":
+                  minor, patch = minor + 1, 0
+              else:
+                  patch += 1
+              new_version = f"{major}.{minor}.{patch}"
+              config["project"]["version"] = new_version
+              with open("pyproject.toml", "w") as f:
+                  toml.dump(config, f)
+              print(f"Version bumped ({bump_type}): {current} -> {new_version}")
 
-          new_version = f"{major}.{minor}.{patch}"
-
-          # Update pyproject.toml
-          config['project']['version'] = new_version
-          with open('pyproject.toml', 'w') as f:
-              toml.dump(config, f)
-
-          print(f"Version bumped: {current_version} -> {new_version}")
-
-          # Set output
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"new_version={new_version}\n")
-              f.write(f"old_version={current_version}\n")
           EOF
 
       - name: Update CHANGELOG.md
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true' && github.event_name == 'pull_request'
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           python << 'EOF'
+          import os
           import re
           from datetime import datetime
 
-          new_version = "${{ steps.bump.outputs.new_version }}"
-          pr_title = "${{ github.event.pull_request.title }}"
-          pr_number = "${{ github.event.pull_request.number }}"
+          new_version = os.environ["NEW_VERSION"]
+          pr_title = os.environ["PR_TITLE"]
+          pr_number = os.environ["PR_NUMBER"]
           today = datetime.now().strftime("%Y-%m-%d")
 
-          # Read current changelog
-          with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+          with open("CHANGELOG.md", encoding="utf-8") as f:
               changelog = f.read()
 
-          # --- Extract existing [Unreleased] content ---
-          # Match everything between ## [Unreleased] and the next ## [ heading
+          # Idempotent: do nothing if this version is already recorded.
+          if f"## [{new_version}]" in changelog:
+              print(f"CHANGELOG already has v{new_version}; nothing to do.")
+              raise SystemExit(0)
+
           unreleased_match = re.search(
-              r'## \[Unreleased\]\s*\n(.*?)(?=\n## \[)',
-              changelog,
-              re.DOTALL,
+              r"## \[Unreleased\]\s*\n(.*?)(?=\n## \[)", changelog, re.DOTALL
           )
-          unreleased_content = ""
-          if unreleased_match:
-              unreleased_content = unreleased_match.group(1).strip()
+          unreleased_content = unreleased_match.group(1).strip() if unreleased_match else ""
 
           if unreleased_content:
-              # --- Use hand-written [Unreleased] content as the new version entry ---
               new_entry = f"## [{new_version}] - {today}\n\n{unreleased_content}"
-              print(f"Using hand-written [Unreleased] content for v{new_version}")
           else:
-              # --- Fallback: generate entry from PR title ---
               entry_type = "Changed"
-              if pr_title.lower().startswith('feat'):
+              low = pr_title.lower()
+              if low.startswith("feat"):
                   entry_type = "Added"
-              elif pr_title.lower().startswith('fix'):
+              elif low.startswith("fix"):
                   entry_type = "Fixed"
-              elif pr_title.lower().startswith('docs'):
+              elif low.startswith("docs"):
                   entry_type = "Documentation"
-              elif pr_title.lower().startswith('refactor'):
-                  entry_type = "Changed"
-              elif pr_title.lower().startswith('perf'):
+              elif low.startswith("perf"):
                   entry_type = "Performance"
-              elif pr_title.lower().startswith('test'):
+              elif low.startswith("test"):
                   entry_type = "Testing"
-
-              clean_title = re.sub(
-                  r'^(feat|fix|docs|refactor|perf|test|chore|style|ci)(\(.+?\))?:\s*',
-                  '', pr_title, flags=re.IGNORECASE,
+              clean = re.sub(
+                  r"^(feat|fix|docs|refactor|perf|test|chore|style|ci)(\(.+?\))?:\s*",
+                  "", pr_title, flags=re.IGNORECASE,
               )
-              new_entry = f"## [{new_version}] - {today}\n\n### {entry_type}\n\n- {clean_title} (#{pr_number})"
-              print(f"No [Unreleased] content found — generated entry from PR title for v{new_version}")
+              new_entry = f"## [{new_version}] - {today}\n\n### {entry_type}\n\n- {clean} (#{pr_number})"
 
-          # --- Replace: clear [Unreleased] and insert versioned entry ---
-          if '## [Unreleased]' in changelog:
-              # Replace [Unreleased] + its content + next heading boundary
+          if "## [Unreleased]" in changelog:
               changelog = re.sub(
-                  r'(## \[Unreleased\])\s*\n.*?(?=\n## \[)',
-                  f'\\1\n\n{new_entry}\n',
+                  r"(## \[Unreleased\])\s*\n.*?(?=\n## \[)",
+                  f"\\1\n\n{new_entry}\n",
                   changelog,
                   count=1,
                   flags=re.DOTALL,
               )
           else:
-              # No [Unreleased] section — insert before first version heading
-              lines = changelog.split('\n')
-              insert_pos = 0
-              for i, line in enumerate(lines):
-                  if line.startswith('## [') and 'Unreleased' not in line:
-                      insert_pos = i
-                      break
-              if insert_pos > 0:
-                  lines.insert(insert_pos, f'{new_entry}\n')
-                  changelog = '\n'.join(lines)
+              changelog = changelog.replace("# Changelog", f"# Changelog\n\n{new_entry}", 1)
 
-          with open('CHANGELOG.md', 'w', encoding='utf-8') as f:
+          with open("CHANGELOG.md", "w", encoding="utf-8") as f:
               f.write(changelog)
-
           print(f"Added changelog entry for v{new_version}")
           EOF
 
       - name: Commit version bump
-        if: steps.pr-merge-check.outputs.is_pr_merge != 'true' && steps.manual-check.outputs.skip != 'true'
+        id: finalize
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml CHANGELOG.md
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]" || echo "No changes to commit"
-          git push
+          git commit -m "chore: bump version to ${NEW_VERSION} [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:main
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: version-bump
-    # Publish on direct pushes to main OR merged PRs (both produce new versions)
-    if: >-
-      (
-        github.event_name == 'push'
-        && github.ref == 'refs/heads/main'
-        && needs.version-bump.outputs.is_pr_merge != 'true'
-      )
-      || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: needs.version-bump.outputs.new_version != ''
 
     steps:
       - name: Checkout code (with bumped version)
@@ -304,14 +229,14 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: python -m twine upload dist/*
+        # --skip-existing makes re-runs idempotent instead of failing with a 400.
+        run: python -m twine upload --skip-existing dist/*
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: version-bump
-    # Only create releases for minor bumps (merged PRs)
-    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    needs: [version-bump, publish]
+    if: needs.version-bump.outputs.new_version != ''
 
     steps:
       - name: Checkout code
@@ -320,59 +245,38 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Download PR description
-        id: download-pr-body
-        uses: actions/download-artifact@v8.0.0
-        continue-on-error: true
-        with:
-          name: pr-description
-          path: .
+      - name: Pull latest
+        run: git pull origin main
 
-      - name: Create Git Tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull origin main
-          git tag -a "v${{ needs.version-bump.outputs.new_version }}" -m "Release v${{ needs.version-bump.outputs.new_version }}"
-          git push origin "v${{ needs.version-bump.outputs.new_version }}"
-
-      - name: Prepare Release Notes
-        id: release-notes
-        run: |
-          VERSION="${{ needs.version-bump.outputs.new_version }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-
-          # Create release notes from PR description
-          cat << 'HEADER' > release_notes.md
-
-          HEADER
-
-          # Add PR title as header
-          echo "## ${PR_TITLE} (#${PR_NUMBER})" >> release_notes.md
-          echo "" >> release_notes.md
-
-          # Use artifact PR body if available, otherwise fall back to event body
-          if [ -f pr_body.md ] && [ -s pr_body.md ]; then
-            cat pr_body.md >> release_notes.md
-          elif [ -n "$PR_BODY" ]; then
-            echo "$PR_BODY" >> release_notes.md
-          else
-            echo "No detailed description provided." >> release_notes.md
-          fi
-
-          echo "Release notes prepared for v${VERSION}"
-          cat release_notes.md
+      - name: Prepare release notes
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## ${PR_TITLE} (#${PR_NUMBER})"
+            echo ""
+            if [ -n "$PR_BODY" ]; then
+              echo "$PR_BODY"
+            else
+              echo "No detailed description provided."
+            fi
+          } > release_notes.md
+          cat release_notes.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.5.0
-        with:
-          tag_name: v${{ needs.version-bump.outputs.new_version }}
-          name: Release v${{ needs.version-bump.outputs.new_version }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ needs.version-bump.outputs.new_version }}
+        # Use the gh CLI (no third-party action, avoids the Node 20 deprecation).
+        # Creates the tag on main if it does not already exist; idempotent on re-run.
+        run: |
+          if gh release view "v${NEW_VERSION}" >/dev/null 2>&1; then
+            echo "Release v${NEW_VERSION} already exists; skipping."
+          else
+            gh release create "v${NEW_VERSION}" \
+              --target main \
+              --title "Release v${NEW_VERSION}" \
+              --notes-file release_notes.md
+          fi

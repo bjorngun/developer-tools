@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Release workflow now triggers solely on PR merge (removed the duplicate `push`-to-`main` trigger that caused two release runs to race). Version bump size is selected by PR label: none → patch (default), `release:minor` → minor, `release:major` → major.
+
+### Fixed
+
+- PyPI publish step is now idempotent (`twine upload --skip-existing`) and the release job no longer fails with a `400 Bad Request` when a version was already uploaded by a concurrent run.
+- GitHub Release creation now uses the `gh` CLI instead of a third-party action (removes the Node 20 deprecation warning) and no longer depends on a `pr-description` artifact that could be missing.
+
 ## [1.2.0] - 2026-06-05
 
 ### Added
