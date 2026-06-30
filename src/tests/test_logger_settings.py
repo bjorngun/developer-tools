@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from datetime import datetime
 import pytest
 from unittest.mock import patch
@@ -9,6 +10,8 @@ from dev_tools.logger_settings import (
     is_logs_sorted_by_days,
     is_same_day_append_enabled,
     log_exit_code,
+    _log_uncaught_exception,
+    _exit_state,
     _get_logger_folder,
     _get_log_basename,
     _default_logging_config,
@@ -322,6 +325,112 @@ class TestLoggerSetupFileNaming:
 
 
 # ===================================================================
+# TestParameterOverrides
+# ===================================================================
+
+
+@pytest.mark.usefixtures("_clean_logger_env")
+class TestParameterOverrides:
+    """Tests for explicit argument overrides of the LOGGER_* env vars."""
+
+    @pytest.mark.parametrize("override", [True, False])
+    def test_same_day_append_override_beats_env(self, override, monkeypatch):
+        """Explicit override should take precedence over the env var."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "False" if override else "True")
+        assert is_same_day_append_enabled(override) is override
+
+    @pytest.mark.parametrize("override", [True, False])
+    def test_day_specific_override_beats_env(self, override, monkeypatch):
+        """Explicit override should take precedence over the env var."""
+        monkeypatch.setenv("LOGGER_DAY_SPECIFIC", "False" if override else "True")
+        assert is_logs_sorted_by_days(override) is override
+
+    @pytest.mark.parametrize("override", [True, False])
+    def test_script_folders_override_beats_env(self, override, monkeypatch):
+        """Explicit override should take precedence over the env var."""
+        monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "False" if override else "True")
+        assert is_script_folders_enabled(override) is override
+
+    def test_none_override_falls_back_to_env(self, monkeypatch):
+        """None should defer to the environment variable."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+        assert is_same_day_append_enabled(None) is True
+
+    @patch("dev_tools.logger_settings.datetime")
+    def test_get_logger_folder_param_overrides(self, mock_datetime, monkeypatch):
+        """Path helper should honor params over (unset) env vars."""
+        mock_datetime.now.return_value.year = 2026
+        mock_datetime.now.return_value.month = 1
+        mock_datetime.now.return_value.day = 12
+        monkeypatch.delenv("LOGGER_PATH", raising=False)
+        monkeypatch.delenv("LOGGER_SCRIPT_FOLDERS", raising=False)
+        monkeypatch.delenv("LOGGER_DAY_SPECIFIC", raising=False)
+
+        result = _get_logger_folder(
+            script_name="myapp",
+            logger_path="/var/logs",
+            script_folders=True,
+            day_specific=True,
+        )
+        assert result == "/var/logs/myapp/2026/01/12"
+
+    def test_get_log_basename_append_param(self, monkeypatch):
+        """Basename helper should use stable name when param enables append."""
+        monkeypatch.delenv("LOGGER_APPEND_SAME_DAY", raising=False)
+
+        result = _get_log_basename("provisioning", append_same_day=True)
+        assert result == "provisioning.log"
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    def test_logger_setup_append_param_without_env(
+        self,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """logger_setup(append_same_day=True) should work without the env var."""
+        monkeypatch.delenv("LOGGER_APPEND_SAME_DAY", raising=False)
+
+        logger_setup(script_name="provisioning", append_same_day=True)
+
+        assert mock_file_config.call_args.kwargs["defaults"]["logfilename"].endswith(
+            "provisioning.log"
+        )
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.mkdir")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    @patch("dev_tools.logger_settings.datetime")
+    def test_logger_setup_path_params_without_env(
+        self,
+        mock_datetime,
+        _mock_exists,
+        _mock_mkdir,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """logger_setup path params should drive the folder without env vars."""
+        for key in ("LOGGER_PATH", "LOGGER_SCRIPT_FOLDERS", "LOGGER_DAY_SPECIFIC"):
+            monkeypatch.delenv(key, raising=False)
+        mock_datetime.now.return_value = datetime(2026, 1, 12, 10, 11, 12)
+
+        logger_setup(
+            script_name="myapp",
+            logger_path="/var/logs",
+            script_folders=True,
+            day_specific=True,
+        )
+
+        filename = mock_file_config.call_args.kwargs["defaults"]["logfilename"]
+        assert filename.startswith("/var/logs/myapp/2026/01/12/")
+
+
+# ===================================================================
 # TestIsLogsSortedByDays
 # ===================================================================
 
@@ -353,23 +462,71 @@ class TestIsLogsSortedByDays:
 
 
 class TestLogExitCode:
-    """Tests for log_exit_code() function."""
+    """Tests for log_exit_code() and the uncaught-exception hook."""
 
-    def test_logs_zero_when_no_exception(self, caplog):
-        """Should log exit code 0 when no active exception."""
+    @pytest.fixture(autouse=True)
+    def _reset_exit_state(self):
+        """Reset the shared exit status before and after each test."""
+        _exit_state["status"] = 0
+        yield
+        _exit_state["status"] = 0
+
+    def test_logs_zero_by_default(self, caplog):
+        """Should log exit code 0 when no failure was recorded."""
         with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
             log_exit_code()
         assert "Exit code: 0" in caplog.text
 
-    def test_logs_one_when_exception_active(self, caplog):
-        """Should log exit code 1 when an unhandled exception is active."""
+    def test_logs_one_after_uncaught_exception(self, caplog):
+        """Should log exit code 1 after the excepthook records a failure."""
         try:
             raise ValueError("test error")
         except ValueError:
-            # sys.exc_info() is non-None inside the except block
-            with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
-                log_exit_code()
+            exc = sys.exc_info()
+        with patch("dev_tools.logger_settings.sys.__excepthook__"):
+            _log_uncaught_exception(*exc)
+        with caplog.at_level(logging.INFO, logger="dev_tools.logger_settings"):
+            log_exit_code()
         assert "Exit code: 1" in caplog.text
+
+    def test_excepthook_sets_status_and_logs_traceback(self, caplog):
+        """The excepthook should record status 1, log, and chain to default."""
+        try:
+            raise RuntimeError("boom")
+        except RuntimeError:
+            exc = sys.exc_info()
+        with patch("dev_tools.logger_settings.sys.__excepthook__") as mock_default:
+            with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
+                _log_uncaught_exception(*exc)
+            mock_default.assert_called_once_with(*exc)
+        assert _exit_state["status"] == 1
+        assert "Uncaught exception" in caplog.text
+        assert "RuntimeError: boom" in caplog.text
+
+    def test_keyboardinterrupt_records_status_without_logging(self, caplog):
+        """KeyboardInterrupt should set status 1, skip logging, chain to default."""
+        try:
+            raise KeyboardInterrupt()
+        except KeyboardInterrupt:
+            exc = sys.exc_info()
+        with patch("dev_tools.logger_settings.sys.__excepthook__") as mock_default:
+            with caplog.at_level(logging.CRITICAL, logger="dev_tools.logger_settings"):
+                _log_uncaught_exception(*exc)
+            mock_default.assert_called_once_with(*exc)
+        assert _exit_state["status"] == 1
+        assert "Uncaught exception" not in caplog.text
+
+    @patch("dev_tools.logger_settings.logging.config.dictConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=False)
+    def test_logger_setup_installs_excepthook(self, _mock_exists, _mock_dictConfig):
+        """logger_setup() should install the uncaught-exception hook."""
+        original = sys.excepthook
+        try:
+            logger_setup()
+            assert sys.excepthook is _log_uncaught_exception
+        finally:
+            sys.excepthook = original
+
 
 
 # ===================================================================
