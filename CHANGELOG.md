@@ -18,13 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Homepage` URL in PyPI project metadata.
 - README documentation for logging configuration file discovery and fallback behavior.
 - README section documenting exit-code and unhandled-exception logging behavior.
+- README guide for switching from a file-per-run to a single log per day, plus an argument/env-var reference table.
+- `logger_setup()` keyword arguments `logger_path`, `script_folders`, `day_specific`, and `append_same_day` that mirror the `LOGGER_*` environment variables (arguments take precedence; `None` falls back to the env var).
+- Optional `override` argument on `is_same_day_append_enabled()`, `is_logs_sorted_by_days()`, and `is_script_folders_enabled()`.
 - Subprocess tests for `python -m dev_tools.md_link_checker` and `python -m dev_tools.codemap_generator` entry points.
 - Tests for `is_logs_sorted_by_days()`, `log_exit_code()`, error paths in `logger_setup()`, debug-mode branch, and `_default_logging_config()` return values.
 - Tests for the uncaught-exception hook installed by `logger_setup()`.
+- Tests for the new `logger_setup()` keyword arguments and helper overrides.
 
 ### Changed
 
 - **Breaking:** `timing_decorator` no longer prints elapsed time by default; requires `TIMING=True` env var.
+- `logger_setup()` docstring now documents the complete `LOGGER_*` environment-variable contract and a single-log-per-day recipe, so consuming agents/tools can discover the behavior from the installed package.
 - Publish job extracted from `version.yml` to separate `publish.yml` workflow.
 - CI test matrix expanded to run all Python versions (3.10–3.14) on both Windows and Ubuntu, plus macOS with Python 3.12.
 

@@ -111,6 +111,37 @@ If `LOGGER_APPEND_SAME_DAY=True`, `logger_setup()` uses a stable basename such a
 
 If you pass `script_name` directly to `logger_setup(script_name="my_etl_script")`, that value takes precedence for that call only. It does not overwrite the process `SCRIPT_NAME` environment variable for later logging setup calls.
 
+#### Configuring via arguments instead of env vars
+
+Every behavioral option also has a keyword argument, so you can configure logging in code without setting environment variables. Arguments take precedence; when an argument is left as `None` the matching environment variable is used (preserving 12-factor / deployment overrides):
+
+| Argument | Env var | Description |
+| -------- | ------- | ----------- |
+| `logger_path` | `LOGGER_PATH` | Base log directory |
+| `script_folders` | `LOGGER_SCRIPT_FOLDERS` | Add a script-name subfolder |
+| `day_specific` | `LOGGER_DAY_SPECIFIC` | Add a day subfolder |
+| `append_same_day` | `LOGGER_APPEND_SAME_DAY` | Reuse one stable log file per folder |
+
+#### Switching from a file-per-run to a single log per day
+
+By default each run creates its own timestamped file (multi-log), e.g. `logs/2026/03/02/2026-03-02T062351.log`. To keep **one rolling log per day** instead, enable same-day append:
+
+``` py
+from dev_tools.logger_settings import logger_setup
+
+# In code (no env vars needed):
+logger_setup(script_name="my_etl", append_same_day=True)
+```
+
+…or via environment variables:
+
+```text
+SCRIPT_NAME=my_etl
+LOGGER_APPEND_SAME_DAY=True
+```
+
+Same-day runs then append to a stable file such as `logs/2026/03/my_etl.log`. With the built-in `TimedRotatingFileHandler` (or the bundled `logging.conf`), that file rotates at midnight — giving you exactly one file per day.
+
 #### Exit Code and Unhandled Exceptions
 
 `logger_setup()` installs a `sys.excepthook` and an `atexit` handler so the final log line reflects the real outcome of the run:

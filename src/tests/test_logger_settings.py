@@ -325,6 +325,110 @@ class TestLoggerSetupFileNaming:
 
 
 # ===================================================================
+# TestParameterOverrides
+# ===================================================================
+
+
+@pytest.mark.usefixtures("_clean_logger_env")
+class TestParameterOverrides:
+    """Tests for explicit argument overrides of the LOGGER_* env vars."""
+
+    @pytest.mark.parametrize("override", [True, False])
+    def test_same_day_append_override_beats_env(self, override, monkeypatch):
+        """Explicit override should take precedence over the env var."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "False" if override else "True")
+        assert is_same_day_append_enabled(override) is override
+
+    @pytest.mark.parametrize("override", [True, False])
+    def test_day_specific_override_beats_env(self, override, monkeypatch):
+        """Explicit override should take precedence over the env var."""
+        monkeypatch.setenv("LOGGER_DAY_SPECIFIC", "False" if override else "True")
+        assert is_logs_sorted_by_days(override) is override
+
+    @pytest.mark.parametrize("override", [True, False])
+    def test_script_folders_override_beats_env(self, override, monkeypatch):
+        """Explicit override should take precedence over the env var."""
+        monkeypatch.setenv("LOGGER_SCRIPT_FOLDERS", "False" if override else "True")
+        assert is_script_folders_enabled(override) is override
+
+    def test_none_override_falls_back_to_env(self, monkeypatch):
+        """None should defer to the environment variable."""
+        monkeypatch.setenv("LOGGER_APPEND_SAME_DAY", "True")
+        assert is_same_day_append_enabled(None) is True
+
+    @patch("dev_tools.logger_settings.datetime")
+    def test_get_logger_folder_param_overrides(self, mock_datetime, monkeypatch):
+        """Path helper should honor params over (unset) env vars."""
+        mock_datetime.now.return_value.year = 2026
+        mock_datetime.now.return_value.month = 1
+        mock_datetime.now.return_value.day = 12
+        monkeypatch.delenv("LOGGER_PATH", raising=False)
+        monkeypatch.delenv("LOGGER_SCRIPT_FOLDERS", raising=False)
+        monkeypatch.delenv("LOGGER_DAY_SPECIFIC", raising=False)
+
+        result = _get_logger_folder(
+            script_name="myapp",
+            logger_path="/var/logs",
+            script_folders=True,
+            day_specific=True,
+        )
+        assert result == "/var/logs/myapp/2026/01/12"
+
+    def test_get_log_basename_append_param(self, monkeypatch):
+        """Basename helper should use stable name when param enables append."""
+        monkeypatch.delenv("LOGGER_APPEND_SAME_DAY", raising=False)
+
+        result = _get_log_basename("provisioning", append_same_day=True)
+        assert result == "provisioning.log"
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    def test_logger_setup_append_param_without_env(
+        self,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """logger_setup(append_same_day=True) should work without the env var."""
+        monkeypatch.delenv("LOGGER_APPEND_SAME_DAY", raising=False)
+
+        logger_setup(script_name="provisioning", append_same_day=True)
+
+        assert mock_file_config.call_args.kwargs["defaults"]["logfilename"].endswith(
+            "provisioning.log"
+        )
+
+    @patch("dev_tools.logger_settings.load_dotenv")
+    @patch("dev_tools.logger_settings.logging.config.fileConfig")
+    @patch("dev_tools.logger_settings.Path.exists", return_value=True)
+    @patch("dev_tools.logger_settings.datetime")
+    def test_logger_setup_path_params_without_env(
+        self,
+        mock_datetime,
+        _mock_exists,
+        mock_file_config,
+        _mock_load_dotenv,
+        monkeypatch,
+    ):
+        """logger_setup path params should drive the folder without env vars."""
+        for key in ("LOGGER_PATH", "LOGGER_SCRIPT_FOLDERS", "LOGGER_DAY_SPECIFIC"):
+            monkeypatch.delenv(key, raising=False)
+        mock_datetime.now.return_value = datetime(2026, 1, 12, 10, 11, 12)
+
+        logger_setup(
+            script_name="myapp",
+            logger_path="/var/logs",
+            script_folders=True,
+            day_specific=True,
+        )
+
+        filename = mock_file_config.call_args.kwargs["defaults"]["logfilename"]
+        assert filename.startswith("/var/logs/myapp/2026/01/12/")
+
+
+# ===================================================================
 # TestIsLogsSortedByDays
 # ===================================================================
 
