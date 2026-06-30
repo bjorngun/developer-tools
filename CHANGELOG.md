@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-06-30
+
 ### Changed
 
 - Release workflow now triggers solely on PR merge (removed the duplicate `push`-to-`main` trigger that caused two release runs to race). Version bump size is selected by PR label: none → patch (default), `release:minor` → minor, `release:major` → major.
